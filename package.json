@@ -2,7 +2,7 @@
   "name": "battleship",
   "version": "1.0.0",
   "type": "module",
-  "description": "",
+  "description": "A web-based clone of the classic strategy game",
   "private": "true",
   "scripts": {
     "test": "jest",

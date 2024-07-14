@@ -13,6 +13,14 @@ export default [
     languageOptions: {
       globals: {
         ...globals.browser,
+        ...globals.node,
+      },
+    },
+  },
+  {
+    files: ["tests/**/*"],
+    languageOptions: {
+      globals: {
         ...globals.jest,
       },
     },
