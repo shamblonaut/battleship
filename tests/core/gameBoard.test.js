@@ -180,4 +180,20 @@ describe("GameBoard", () => {
 
     expect(newBoard.isFleetDestroyed()).toBe(true);
   });
+
+  it("sets corresponding cells to be sunk after a ship is sunk", () => {
+    const newBoard = createGameBoard(10);
+    newBoard.placeShip([2, 2], 4, ShipOrientation.HORIZONTAL);
+
+    newBoard.receiveAttack([2, 2]);
+    newBoard.receiveAttack([3, 2]);
+    newBoard.receiveAttack([4, 2]);
+    newBoard.receiveAttack([5, 2]);
+
+    expect(newBoard.ships[0].isSunk()).toBe(true);
+
+    for (let i = 2; i <= 5; i++) {
+      expect(newBoard.cells[2][i]).toBe(CellState.SUNK);
+    }
+  });
 });

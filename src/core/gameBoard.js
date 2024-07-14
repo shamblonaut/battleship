@@ -5,6 +5,7 @@ export const CellState = Object.freeze({
   MISS: 1,
   SHIP: 2,
   HIT: 3,
+  SUNK: 4,
 });
 
 export function createGameBoard(size) {
@@ -74,6 +75,7 @@ export function createGameBoard(size) {
       ) {
         throw new Error("Cannot attack outside the board");
       }
+
       if (
         this.cells[coordinates[1]][coordinates[0]] !== CellState.EMPTY &&
         this.cells[coordinates[1]][coordinates[0]] !== CellState.SHIP
@@ -99,7 +101,28 @@ export function createGameBoard(size) {
         ) {
           ship.hit();
 
-          this.cells[coordinates[1]][coordinates[0]] = CellState.HIT;
+          if (ship.isSunk()) {
+            if (ship.orientation === ShipOrientation.HORIZONTAL) {
+              for (
+                let i = ship.coordinates[0];
+                i <= ship.coordinates[0] + ship.length - 1;
+                i++
+              ) {
+                this.cells[ship.coordinates[1]][i] = CellState.SUNK;
+              }
+            } else if (ship.orientation === ShipOrientation.VERTICAL) {
+              for (
+                let i = ship.coordinates[1];
+                i <= ship.coordinates[1] + ship.length - 1;
+                i++
+              ) {
+                this.cells[i][ship.coordinates[0]] = CellState.SUNK;
+              }
+            }
+          } else {
+            this.cells[coordinates[1]][coordinates[0]] = CellState.HIT;
+          }
+
           return true;
         }
       }
