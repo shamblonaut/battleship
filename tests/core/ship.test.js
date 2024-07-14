@@ -1,4 +1,4 @@
-import createShip from "../../src/components/ship.js";
+import { createShip, ShipOrientation } from "../../src/core/ship";
 
 describe("Ship", () => {
   it("creates a new ship with given length", () => {
@@ -9,6 +9,12 @@ describe("Ship", () => {
   it("does not create a ship with no length", () => {
     const newShip = createShip(0);
     expect(newShip).toBeUndefined();
+  });
+
+  it("sets coordinates and orientation of ship if provided", () => {
+    const newShip = createShip(4, [4, 4], ShipOrientation.VERTICAL);
+    expect(newShip.coordinates).toStrictEqual([4, 4]);
+    expect(newShip.orientation).toStrictEqual(ShipOrientation.VERTICAL);
   });
 
   it("starts out with no hits", () => {
