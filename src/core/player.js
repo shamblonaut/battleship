@@ -5,25 +5,10 @@ export const PlayerType = Object.freeze({
   COMPUTER: "COMPUTER",
 });
 
-export function createPlayer(type) {
+export function createPlayer(name, type, boardSize) {
   return {
+    name,
     type,
-    active: false,
-    board: createGameBoard(10),
-
-    activate: function () {
-      if (this.active) {
-        throw new Error("Player is already active");
-      }
-
-      this.active = true;
-    },
-    deactivate: function () {
-      if (!this.active) {
-        throw new Error("Player is already inactive");
-      }
-
-      this.active = false;
-    },
+    board: createGameBoard(boardSize),
   };
 }

@@ -76,8 +76,8 @@ header {
   background-color: #cba6f7;
 }
 
-.game-started .player-two .cell.empty:hover,
-.game-started .player-two .cell.ship:hover {
+.attack-allowed .player-two .cell.empty:hover,
+.attack-allowed .player-two .cell.ship:hover {
   filter: brightness(105%);
   box-shadow:
     #41a3d5 3px 3px 6px 0 inset,
@@ -140,7 +140,7 @@ header {
 }
 
 .controls button,
-.restart {
+.reset {
   align-items: center;
   appearance: none;
   background-image: radial-gradient(
@@ -178,7 +178,7 @@ header {
 }
 
 .controls button:focus,
-.restart:focus {
+.reset:focus {
   box-shadow:
     #3c4fe0 0 0 0 1.5px inset,
     rgba(45, 35, 66, 0.4) 0 2px 4px,
@@ -187,7 +187,7 @@ header {
 }
 
 .controls button:hover,
-.restart:hover {
+.reset:hover {
   box-shadow:
     rgba(45, 35, 66, 0.4) 0 4px 8px,
     rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
@@ -196,7 +196,7 @@ header {
 }
 
 .controls button:active,
-.restart:active {
+.reset:active {
   box-shadow: #3c4fe0 0 3px 7px inset;
   transform: translateY(2px);
 }

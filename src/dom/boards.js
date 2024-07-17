@@ -2,157 +2,79 @@ import { CellState } from "../core/gameBoard.js";
 import { PlayerType } from "../core/player.js";
 import { ShipOrientation } from "../core/ship.js";
 
-export const gameStartEvent = new Event("game-start");
-export const gameOverEvent = new Event("game-over");
-export const restartGameEvent = new Event("restart-game");
-export const refreshBoardEvent = new Event("refresh-board");
-export const randomizeBoardEvent = new Event("randomize-board");
-const receiveAttackEvent = new Event("receive-attack");
+export function setupGameBoards(game, playerOne, playerTwo) {
+  const boardOne = createBoardComponent(playerOne.board, true);
+  boardOne.randomizeFormation();
 
-let isGameStarted = false;
-let isGameOver = false;
+  boardOne.component.classList.add(
+    "player-one",
+    playerOne.type === PlayerType.HUMAN ? "human" : "computer",
+  );
+  boardOne.component.addEventListener("click", () => boardOne.clear(), true);
 
-export function setupGameBoards(playerOne, playerTwo) {
-  randomizeShipFormation(playerOne.board);
-  randomizeShipFormation(playerTwo.board);
+  const boardTwo = createBoardComponent(playerTwo.board, false);
+  boardTwo.randomizeFormation();
 
-  const playerOneBoardComponent = generateBoard(playerOne.board, true);
-  playerOneBoardComponent.classList.add("player-one", "human");
-
-  playerOneBoardComponent.addEventListener("refresh-board", () => {
-    Array.from(playerOneBoardComponent.children).forEach((row, i) => {
-      Array.from(row.children).forEach((cell, j) => {
-        const isMoving = cell.classList.contains("moving");
-
-        cell.className = "cell";
-        cell.classList.add(getCellClassName([j, i], playerOne.board));
-        if (isMoving) cell.classList.add("moving");
-      });
-    });
-  });
-  playerOneBoardComponent.addEventListener("randomize-board", () => {
-    clearShipMovement(playerOneBoardComponent);
-    randomizeShipFormation(playerOne.board);
-    playerOneBoardComponent.dispatchEvent(refreshBoardEvent);
-  });
-  playerOneBoardComponent.addEventListener(
-    "click",
-    () => clearShipMovement(playerOneBoardComponent),
-    true,
+  boardTwo.component.classList.add(
+    "player-two",
+    playerTwo.type === PlayerType.HUMAN ? "human" : "computer",
   );
 
-  document.addEventListener("receive-attack", async () => {
-    if (playerTwo.type === PlayerType.COMPUTER) {
-      await receiveComputerAttack(playerOne.board, playerOneBoardComponent);
-
-      document.querySelector(".board-one-info").textContent = "";
-      document.querySelector(".board-two-info").textContent = "Your Turn";
-    }
-  });
-
-  function shipMovementHandler(event) {
-    const movingShipCell = playerOneBoardComponent.querySelector(".moving");
-
-    if (!movingShipCell) return;
-
-    const movingShipCoordinates = getCellIndex(movingShipCell);
-    const movingShipIndex = playerOne.board.getShipIndex(movingShipCoordinates);
-
-    toggleShipMotion(
-      movingShipCoordinates,
-      playerOne.board,
-      playerOneBoardComponent,
-    );
-
-    let moveSuccessful = false;
-    switch (event.key) {
-      case "ArrowUp":
-        if (movingShipCoordinates[1] <= 0) break;
-        moveSuccessful = playerOne.board.moveShip(movingShipIndex, [
-          movingShipCoordinates[0],
-          movingShipCoordinates[1] - 1,
-        ]);
-        break;
-      case "ArrowLeft":
-        if (movingShipCoordinates[0] <= 0) break;
-        moveSuccessful = playerOne.board.moveShip(movingShipIndex, [
-          movingShipCoordinates[0] - 1,
-          movingShipCoordinates[1],
-        ]);
-        break;
-      case "ArrowDown":
-        if (movingShipCoordinates[1] >= playerOne.board.size - 1) break;
-        moveSuccessful = playerOne.board.moveShip(movingShipIndex, [
-          movingShipCoordinates[0],
-          movingShipCoordinates[1] + 1,
-        ]);
-        break;
-      case "ArrowRight":
-        if (movingShipCoordinates[0] >= playerOne.board.size - 1) break;
-        moveSuccessful = playerOne.board.moveShip(movingShipIndex, [
-          movingShipCoordinates[0] + 1,
-          movingShipCoordinates[1],
-        ]);
-        break;
-    }
-
-    if (!moveSuccessful) {
-      toggleShipMotion(
-        movingShipCoordinates,
-        playerOne.board,
-        playerOneBoardComponent,
-      );
-      return;
-    }
-
-    playerOneBoardComponent.dispatchEvent(refreshBoardEvent);
-
-    const movedShip = playerOne.board.ships[movingShipIndex];
-    toggleShipMotion(
-      movedShip.coordinates,
-      playerOne.board,
-      playerOneBoardComponent,
-    );
-  }
-  document.addEventListener("keydown", shipMovementHandler);
-
-  const playerTwoBoardComponent = generateBoard(playerTwo.board, false);
-  playerTwoBoardComponent.classList.add("player-two", "computer");
-
-  playerTwoBoardComponent.addEventListener("refresh-board", () => {
-    Array.from(playerTwoBoardComponent.children).forEach((row, i) => {
+  for (const DOMBoard of [boardOne, boardTwo]) {
+    Array.from(DOMBoard.component.children).forEach((row, i) => {
       Array.from(row.children).forEach((cell, j) => {
-        cell.className = "cell";
-        cell.classList.add(getCellClassName([j, i], playerTwo.board, true));
+        cell.addEventListener("click", () => {
+          if (
+            DOMBoard.isMutable() &&
+            cell.classList.contains("ship") &&
+            !game.isInProgress
+          ) {
+            DOMBoard.toggleShipMotion([j, i]);
+          } else if (
+            !DOMBoard.isMutable() &&
+            game.isInProgress &&
+            !game.isGameOver &&
+            game.isPlayerWaiting
+          ) {
+            DOMBoard.receiveAttack([j, i]);
+            game.isPlayerWaiting = false;
+          }
+        });
+
+        cell.addEventListener("contextmenu", (event) => {
+          if (
+            !DOMBoard.isMutable() ||
+            game.isInProgress ||
+            !cell.classList.contains("ship")
+          ) {
+            return;
+          }
+
+          const shipIndex = DOMBoard.board.getShipIndex([j, i]);
+          const ship = DOMBoard.board.ships[shipIndex];
+
+          if (!cell.classList.contains("moving")) {
+            DOMBoard.toggleShipMotion(ship.coordinates);
+          }
+
+          if (DOMBoard.board.rotateShip(shipIndex)) {
+            DOMBoard.clear();
+            DOMBoard.toggleShipMotion(ship.coordinates);
+            DOMBoard.render();
+          }
+
+          event.preventDefault();
+        });
       });
     });
-  });
-  playerTwoBoardComponent.addEventListener("randomize-board", () => {
-    randomizeShipFormation(playerTwo.board);
-    playerTwoBoardComponent.dispatchEvent(refreshBoardEvent);
-  });
+  }
 
-  document.addEventListener("game-start", () => {
-    isGameStarted = true;
-    clearShipMovement(playerOneBoardComponent);
-  });
-  document.addEventListener("restart-game", () => {
-    const gameOverOverlay = document.querySelector(".game-over-overlay");
-    if (gameOverOverlay) gameOverOverlay.remove();
+  document.addEventListener("keydown", (event) => boardOne.moveShip(event.key));
 
-    isGameOver = false;
-    isGameStarted = false;
-
-    playerOneBoardComponent.dispatchEvent(randomizeBoardEvent);
-    playerTwoBoardComponent.dispatchEvent(randomizeBoardEvent);
-  });
-
-  document.querySelector(".board-two-info").textContent = "Your Turn";
-
-  return [playerOneBoardComponent, playerTwoBoardComponent];
+  return [boardOne, boardTwo];
 }
 
-export function generateBoard(board, mutable) {
+export function createBoardComponent(board, mutable) {
   const boardComponent = document.createElement("div");
   boardComponent.classList.add("board");
 
@@ -164,97 +86,197 @@ export function generateBoard(board, mutable) {
       const cellComponent = document.createElement("button");
       cellComponent.classList.add("cell");
       cellComponent.classList.add(getCellClassName([j, i], board));
-
-      if (!mutable) {
-        cellComponent.addEventListener("click", () => {
-          if (!isGameStarted || isGameOver) return;
-
-          const cell = board.cells[i][j];
-          if (cell !== CellState.EMPTY && cell !== CellState.SHIP) return;
-
-          board.receiveAttack([j, i]);
-          boardComponent.dispatchEvent(refreshBoardEvent);
-
-          if (board.isFleetDestroyed()) {
-            const gameWonOverlay = document.createElement("div");
-            gameWonOverlay.classList.add("game-over-overlay");
-            gameWonOverlay.innerHTML = `
-              <p>YOU WON THE GAME!</p>
-              <button class="restart">Play Again</button>
-            `;
-            console.log(board);
-            boardComponent.appendChild(gameWonOverlay);
-
-            isGameOver = true;
-            document.dispatchEvent(gameOverEvent);
-            return;
-          }
-
-          document.querySelector(".board-one-info").textContent =
-            "Computer is thinking...";
-          document.querySelector(".board-two-info").textContent = "";
-          document.dispatchEvent(receiveAttackEvent);
-        });
-      }
-
-      if (mutable) {
-        cellComponent.addEventListener("click", () => {
-          if (cellComponent.classList.contains("ship") && !isGameStarted) {
-            toggleShipMotion([j, i], board, boardComponent);
-          }
-        });
-        cellComponent.addEventListener("contextmenu", (event) => {
-          if (cellComponent.classList.contains("ship") && !isGameStarted) {
-            event.preventDefault();
-
-            const shipIndex = board.getShipIndex(getCellIndex(cellComponent));
-            const ship = board.ships[shipIndex];
-
-            if (!cellComponent.classList.contains("moving")) {
-              toggleShipMotion(ship.coordinates, board, boardComponent);
-            }
-
-            if (board.rotateShip(shipIndex)) {
-              clearShipMovement(boardComponent);
-              toggleShipMotion(ship.coordinates, board, boardComponent);
-              boardComponent.dispatchEvent(refreshBoardEvent);
-            }
-          }
-        });
-      }
       rowComponent.appendChild(cellComponent);
     }
+
     boardComponent.appendChild(rowComponent);
   }
 
-  return boardComponent;
-}
+  return {
+    component: boardComponent,
+    board: board,
+    active: false,
 
-export function randomizeShipFormation(board) {
-  const ships = [5, 4, 3, 3, 2];
+    isMutable: function () {
+      return mutable;
+    },
 
-  board.reset();
+    clear: function () {
+      const movingCells = this.component.querySelectorAll(".moving");
+      if (movingCells.length === 0) return;
+      for (const cell of movingCells) {
+        cell.classList.remove("moving");
+      }
+    },
 
-  for (const ship of ships) {
-    let placed = false;
-    while (!placed) {
-      const orientation =
-        Math.random() > 0.5
-          ? ShipOrientation.HORIZONTAL
-          : ShipOrientation.VERTICAL;
+    render: function () {
+      Array.from(this.component.children).forEach((row, i) => {
+        Array.from(row.children).forEach((cell, j) => {
+          const isMoving = cell.classList.contains("moving");
 
-      const x = Math.floor(
-        Math.random() *
-          (10 - (orientation === ShipOrientation.HORIZONTAL ? ship : 0)),
-      );
-      const y = Math.floor(
-        Math.random() *
-          (10 - (orientation === ShipOrientation.VERTICAL ? ship : 0)),
-      );
+          cell.className = "cell";
+          cell.classList.add(getCellClassName([j, i], this.board));
+          if (isMoving) cell.classList.add("moving");
+        });
+      });
+    },
 
-      placed = board.placeShip([x, y], ship, orientation);
-    }
-  }
+    randomizeFormation: function () {
+      const ships = [5, 4, 3, 3, 2];
+
+      this.clear();
+      this.board.reset();
+
+      for (const ship of ships) {
+        let placed = false;
+        while (!placed) {
+          const orientation =
+            Math.random() > 0.5
+              ? ShipOrientation.HORIZONTAL
+              : ShipOrientation.VERTICAL;
+
+          const x = Math.floor(
+            Math.random() *
+              (10 - (orientation === ShipOrientation.HORIZONTAL ? ship : 0)),
+          );
+          const y = Math.floor(
+            Math.random() *
+              (10 - (orientation === ShipOrientation.VERTICAL ? ship : 0)),
+          );
+
+          placed = board.placeShip([x, y], ship, orientation);
+        }
+      }
+
+      this.render();
+    },
+
+    toggleShipMotion: function (coordinates) {
+      const cell =
+        this.component.children[coordinates[1]].children[coordinates[0]];
+
+      if (!cell.classList.contains("ship")) return;
+
+      const shipIndex = this.board.getShipIndex(coordinates);
+      let ship = this.board.ships[shipIndex];
+
+      switch (ship.orientation) {
+        case ShipOrientation.HORIZONTAL:
+          for (
+            let i = ship.coordinates[0];
+            i <= ship.coordinates[0] + ship.length - 1;
+            i++
+          ) {
+            this.component.children[ship.coordinates[1]].children[
+              i
+            ].classList.toggle("moving");
+          }
+          break;
+        case ShipOrientation.VERTICAL:
+          for (
+            let i = ship.coordinates[1];
+            i <= ship.coordinates[1] + ship.length - 1;
+            i++
+          ) {
+            this.component.children[i].children[
+              ship.coordinates[0]
+            ].classList.toggle("moving");
+          }
+          break;
+      }
+    },
+
+    moveShip: function (key) {
+      const movingShipCell = this.component.querySelector(".moving");
+
+      if (!movingShipCell) return;
+
+      const movingShipCoordinates = getCellIndex(movingShipCell);
+      const movingShipIndex = this.board.getShipIndex(movingShipCoordinates);
+
+      this.toggleShipMotion(movingShipCoordinates);
+
+      let moveSuccessful = false;
+      switch (key) {
+        case "ArrowUp":
+          if (movingShipCoordinates[1] <= 0) break;
+          moveSuccessful = this.board.moveShip(movingShipIndex, [
+            movingShipCoordinates[0],
+            movingShipCoordinates[1] - 1,
+          ]);
+          break;
+        case "ArrowLeft":
+          if (movingShipCoordinates[0] <= 0) break;
+          moveSuccessful = this.board.moveShip(movingShipIndex, [
+            movingShipCoordinates[0] - 1,
+            movingShipCoordinates[1],
+          ]);
+          break;
+        case "ArrowDown":
+          if (movingShipCoordinates[1] >= this.board.size - 1) break;
+          moveSuccessful = this.board.moveShip(movingShipIndex, [
+            movingShipCoordinates[0],
+            movingShipCoordinates[1] + 1,
+          ]);
+          break;
+        case "ArrowRight":
+          if (movingShipCoordinates[0] >= this.board.size - 1) break;
+          moveSuccessful = this.board.moveShip(movingShipIndex, [
+            movingShipCoordinates[0] + 1,
+            movingShipCoordinates[1],
+          ]);
+          break;
+      }
+
+      if (!moveSuccessful) {
+        this.toggleShipMotion(movingShipCoordinates);
+        return;
+      }
+
+      this.render();
+
+      const movedShip = this.board.ships[movingShipIndex];
+      this.toggleShipMotion(movedShip.coordinates);
+    },
+
+    receiveAttack: function (coordinates) {
+      const cell = board.cells[coordinates[1]][coordinates[0]];
+      if (
+        (cell !== CellState.EMPTY && cell !== CellState.SHIP) ||
+        !this.active
+      ) {
+        return;
+      }
+
+      board.receiveAttack(coordinates);
+      this.render();
+
+      this.active = false;
+    },
+
+    computerAttack: async function () {
+      let x, y;
+
+      let valid = false;
+      while (!valid) {
+        x = Math.floor(Math.random() * board.size);
+        y = Math.floor(Math.random() * board.size);
+
+        const cell = this.component.children[y].children[x];
+        if (
+          cell.classList.contains("empty") ||
+          cell.classList.contains("ship")
+        ) {
+          break;
+        }
+      }
+
+      await new Promise((r) => setTimeout(r, 500));
+
+      this.board.receiveAttack([x, y]);
+      this.render();
+    },
+  };
 }
 
 function getCellIndex(cell) {
@@ -280,82 +302,5 @@ function getCellClassName(coordinates, board, secret = false) {
       return "hit";
     case CellState.SUNK:
       return "sunk";
-  }
-}
-
-export function clearShipMovement(boardComponent) {
-  const movingCells = boardComponent.querySelectorAll(".moving");
-  if (movingCells.length === 0) return;
-
-  for (const cell of movingCells) {
-    cell.classList.remove("moving");
-  }
-}
-
-function toggleShipMotion(coordinates, board, boardComponent) {
-  const cell = boardComponent.children[coordinates[1]].children[coordinates[0]];
-
-  if (!cell.classList.contains("ship")) return;
-
-  const shipIndex = board.getShipIndex(coordinates);
-  let ship = board.ships[shipIndex];
-
-  switch (ship.orientation) {
-    case ShipOrientation.HORIZONTAL:
-      for (
-        let i = ship.coordinates[0];
-        i <= ship.coordinates[0] + ship.length - 1;
-        i++
-      ) {
-        boardComponent.children[ship.coordinates[1]].children[
-          i
-        ].classList.toggle("moving");
-      }
-      break;
-    case ShipOrientation.VERTICAL:
-      for (
-        let i = ship.coordinates[1];
-        i <= ship.coordinates[1] + ship.length - 1;
-        i++
-      ) {
-        boardComponent.children[i].children[
-          ship.coordinates[0]
-        ].classList.toggle("moving");
-      }
-      break;
-  }
-}
-
-async function receiveComputerAttack(board, boardComponent) {
-  let x = Math.floor(Math.random() * board.size);
-  let y = Math.floor(Math.random() * board.size);
-
-  while (true) {
-    const cell = boardComponent.children[y].children[x];
-
-    if (!cell.classList.contains("empty") && !cell.classList.contains("ship")) {
-      x = Math.floor(Math.random() * board.size);
-      y = Math.floor(Math.random() * board.size);
-    } else {
-      break;
-    }
-  }
-
-  await new Promise((r) => setTimeout(r, 1000));
-
-  board.receiveAttack([x, y]);
-  boardComponent.dispatchEvent(refreshBoardEvent);
-
-  if (board.isFleetDestroyed()) {
-    const gameLostOverlay = document.createElement("div");
-    gameLostOverlay.classList.add("game-over-overlay");
-
-    gameLostOverlay.innerHTML = `
-      <p>YOU LOST THE GAME!</p>
-      <button class="restart">Play Again</button>
-    `;
-    boardComponent.appendChild(gameLostOverlay);
-
-    document.dispatchEvent(gameOverEvent);
   }
 }

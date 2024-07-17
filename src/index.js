@@ -1,13 +1,12 @@
 import { createPlayer, PlayerType } from "./core/player.js";
-import { gameOverEvent, setupGameBoards } from "./dom/boards.js";
 import { setupControls } from "./dom/controls.js";
+import { setupGame } from "./dom/game.js";
 
 import "./styles/index.css";
 
 console.log("Get Ready for Battle!");
 
 const root = document.getElementById("root");
-
 root.innerHTML = `
   <header>Battleship</header>
   <div class="boards"></div>
@@ -21,10 +20,12 @@ root.innerHTML = `
   </div>
 `;
 
-const playerOne = createPlayer(PlayerType.HUMAN);
-const playerTwo = createPlayer(PlayerType.COMPUTER);
+const game = setupGame(
+  createPlayer("Player", PlayerType.HUMAN, 10),
+  createPlayer("Computer", PlayerType.COMPUTER, 10),
+);
 
-const boardsContainer = document.querySelector(".boards");
-boardsContainer.append(...setupGameBoards(playerOne, playerTwo));
-
-setupControls();
+document
+  .querySelector(".boards")
+  .append(game.boards[0].component, game.boards[1].component);
+setupControls(game);
