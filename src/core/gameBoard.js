@@ -20,6 +20,13 @@ export function createGameBoard(size) {
     ),
     ships: [],
 
+    reset: function () {
+      this.cells = Array.from({ length: size }, () =>
+        Array.from({ length: size }, () => CellState.EMPTY),
+      );
+      this.ships = [];
+    },
+
     placeShip: function (coordinates, length, orientation) {
       if (
         coordinates[0] < 0 ||

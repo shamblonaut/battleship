@@ -4,6 +4,7 @@ import { ShipOrientation } from "../core/ship.js";
 
 export const gameStartEvent = new Event("game-start");
 export const gameOverEvent = new Event("game-over");
+export const restartGameEvent = new Event("restart-game");
 export const refreshBoardEvent = new Event("refresh-board");
 export const randomizeBoardEvent = new Event("randomize-board");
 const receiveAttackEvent = new Event("receive-attack");
@@ -123,10 +124,24 @@ export function setupGameBoards(playerOne, playerTwo) {
       });
     });
   });
+  playerTwoBoardComponent.addEventListener("randomize-board", () => {
+    randomizeShipFormation(playerTwo.board);
+    playerTwoBoardComponent.dispatchEvent(refreshBoardEvent);
+  });
 
   document.addEventListener("game-start", () => {
     isGameStarted = true;
     clearShipMovement(playerOneBoardComponent);
+  });
+  document.addEventListener("restart-game", () => {
+    const gameOverOverlay = document.querySelector(".game-over-overlay");
+    if (gameOverOverlay) gameOverOverlay.remove();
+
+    isGameOver = false;
+    isGameStarted = false;
+
+    playerOneBoardComponent.dispatchEvent(randomizeBoardEvent);
+    playerTwoBoardComponent.dispatchEvent(randomizeBoardEvent);
   });
 
   return [playerOneBoardComponent, playerTwoBoardComponent];
@@ -158,7 +173,11 @@ export function generateBoard(board, mutable) {
           if (board.isFleetDestroyed()) {
             const gameWonOverlay = document.createElement("div");
             gameWonOverlay.classList.add("game-over-overlay");
-            gameWonOverlay.textContent = "YOU WON THE GAME!";
+            gameWonOverlay.innerHTML = `
+              <p>YOU WON THE GAME!</p>
+              <button class="restart">Play Again</button>
+            `;
+            console.log(board);
             boardComponent.appendChild(gameWonOverlay);
 
             isGameOver = true;
@@ -206,10 +225,7 @@ export function generateBoard(board, mutable) {
 export function randomizeShipFormation(board) {
   const ships = [5, 4, 3, 3, 2];
 
-  board.ships = [];
-  board.cells.forEach((row) => {
-    row.fill(CellState.EMPTY);
-  });
+  board.reset();
 
   for (const ship of ships) {
     let placed = false;
@@ -323,7 +339,13 @@ function receiveComputerAttack(board, boardComponent) {
   if (board.isFleetDestroyed()) {
     const gameLostOverlay = document.createElement("div");
     gameLostOverlay.classList.add("game-over-overlay");
-    gameLostOverlay.textContent = "YOU LOST THE GAME!";
+
+    gameLostOverlay.innerHTML = `
+      <p>YOU LOST THE GAME!</p>
+      <button class="restart">Play Again</button>
+    `;
     boardComponent.appendChild(gameLostOverlay);
+
+    document.dispatchEvent(gameOverEvent);
   }
 }

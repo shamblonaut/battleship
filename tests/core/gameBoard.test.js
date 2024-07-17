@@ -23,6 +23,20 @@ describe("GameBoard", () => {
     });
   });
 
+  it("resets the board properly on command", () => {
+    const newBoard = createGameBoard(10);
+
+    newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);
+    newBoard.placeShip([3, 3], 4, ShipOrientation.HORIZONTAL);
+
+    newBoard.reset();
+
+    expect(newBoard.ships.length).toBe(0);
+    newBoard.cells.forEach((row) => {
+      row.forEach((cell) => expect(cell).toStrictEqual(CellState.EMPTY));
+    });
+  });
+
   it("places a ship at given coordinates and orientation", () => {
     const newBoard = createGameBoard(10);
     const newShip = createShip(4, [2, 2], ShipOrientation.VERTICAL);

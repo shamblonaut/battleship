@@ -1,4 +1,8 @@
-import { gameStartEvent, randomizeBoardEvent } from "./boards.js";
+import {
+  gameStartEvent,
+  randomizeBoardEvent,
+  restartGameEvent,
+} from "./boards.js";
 
 export function setupControls() {
   document.addEventListener("game-start", () => {
@@ -17,12 +21,21 @@ export function setupControls() {
     root.classList.remove("game-started");
 
     const restartButton = document.querySelector(".restart");
-    restartButton.classList.remove("hidden");
+    if (restartButton) {
+      restartButton.addEventListener("click", () => {
+        document.dispatchEvent(restartGameEvent);
+
+        const startButton = document.querySelector(".start");
+        startButton.classList.remove("hidden");
+
+        const randomizeButton = document.querySelector(".randomize");
+        randomizeButton.classList.remove("hidden");
+      });
+    }
   });
 
   const startButton = document.querySelector(".start");
   startButton.addEventListener("click", () => {
-    startButton.disabled = true;
     document.dispatchEvent(gameStartEvent);
   });
 
