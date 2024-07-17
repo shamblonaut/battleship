@@ -1,56 +1,19 @@
 import { CellState } from "../core/gameBoard.js";
-import { createPlayer, PlayerType } from "../core/player.js";
+import { PlayerType } from "../core/player.js";
 import { ShipOrientation } from "../core/ship.js";
 
-const refreshBoardEvent = new Event("refresh-board");
+export const gameStartEvent = new Event("game-start");
+export const gameOverEvent = new Event("game-over");
+export const refreshBoardEvent = new Event("refresh-board");
+export const randomizeBoardEvent = new Event("randomize-board");
+const receiveAttackEvent = new Event("receive-attack");
 
-export function setupGameBoards() {
-  const playerOne = createPlayer(PlayerType.HUMAN);
-  const playerTwo = createPlayer(PlayerType.COMPUTER);
+let isGameStarted = false;
+let isGameOver = false;
 
-  const ships = [5, 4, 3, 3, 2];
-
-  for (const ship of ships) {
-    let placed = false;
-    while (!placed) {
-      const orientation =
-        Math.random() > 0.5
-          ? ShipOrientation.HORIZONTAL
-          : ShipOrientation.VERTICAL;
-
-      const x = Math.floor(
-        Math.random() *
-          (10 - (orientation === ShipOrientation.HORIZONTAL ? ship : 0)),
-      );
-      const y = Math.floor(
-        Math.random() *
-          (10 - (orientation === ShipOrientation.VERTICAL ? ship : 0)),
-      );
-
-      placed = playerOne.board.placeShip([x, y], ship, orientation);
-    }
-  }
-
-  for (const ship of ships) {
-    let placed = false;
-    while (!placed) {
-      const orientation =
-        Math.random() > 0.5
-          ? ShipOrientation.HORIZONTAL
-          : ShipOrientation.VERTICAL;
-
-      const x = Math.floor(
-        Math.random() *
-          (10 - (orientation === ShipOrientation.HORIZONTAL ? ship : 0)),
-      );
-      const y = Math.floor(
-        Math.random() *
-          (10 - (orientation === ShipOrientation.VERTICAL ? ship : 0)),
-      );
-
-      placed = playerTwo.board.placeShip([x, y], ship, orientation);
-    }
-  }
+export function setupGameBoards(playerOne, playerTwo) {
+  randomizeShipFormation(playerOne.board);
+  randomizeShipFormation(playerTwo.board);
 
   const playerOneBoardComponent = generateBoard(playerOne.board, true);
   playerOneBoardComponent.classList.add("player-one", "human");
@@ -66,11 +29,22 @@ export function setupGameBoards() {
       });
     });
   });
+  playerOneBoardComponent.addEventListener("randomize-board", () => {
+    clearShipMovement(playerOneBoardComponent);
+    randomizeShipFormation(playerOne.board);
+    playerOneBoardComponent.dispatchEvent(refreshBoardEvent);
+  });
   playerOneBoardComponent.addEventListener(
     "click",
     () => clearShipMovement(playerOneBoardComponent),
     true,
   );
+
+  document.addEventListener("receive-attack", () => {
+    if (playerTwo.type === PlayerType.COMPUTER) {
+      receiveComputerAttack(playerOne.board, playerOneBoardComponent);
+    }
+  });
 
   function shipMovementHandler(event) {
     const movingShipCell = playerOneBoardComponent.querySelector(".moving");
@@ -150,6 +124,11 @@ export function setupGameBoards() {
     });
   });
 
+  document.addEventListener("game-start", () => {
+    isGameStarted = true;
+    clearShipMovement(playerOneBoardComponent);
+  });
+
   return [playerOneBoardComponent, playerTwoBoardComponent];
 }
 
@@ -168,6 +147,8 @@ export function generateBoard(board, mutable) {
 
       if (!mutable) {
         cellComponent.addEventListener("click", () => {
+          if (!isGameStarted || isGameOver) return;
+
           const cell = board.cells[i][j];
           if (cell !== CellState.EMPTY && cell !== CellState.SHIP) return;
 
@@ -176,21 +157,27 @@ export function generateBoard(board, mutable) {
 
           if (board.isFleetDestroyed()) {
             const gameWonOverlay = document.createElement("div");
-            gameWonOverlay.classList.add("game-won-overlay");
+            gameWonOverlay.classList.add("game-over-overlay");
             gameWonOverlay.textContent = "YOU WON THE GAME!";
             boardComponent.appendChild(gameWonOverlay);
+
+            isGameOver = true;
+            document.dispatchEvent(gameOverEvent);
+            return;
           }
+
+          document.dispatchEvent(receiveAttackEvent);
         });
       }
 
       if (mutable) {
         cellComponent.addEventListener("click", () => {
-          if (cellComponent.classList.contains("ship")) {
+          if (cellComponent.classList.contains("ship") && !isGameStarted) {
             toggleShipMotion([j, i], board, boardComponent);
           }
         });
         cellComponent.addEventListener("contextmenu", (event) => {
-          if (cellComponent.classList.contains("ship")) {
+          if (cellComponent.classList.contains("ship") && !isGameStarted) {
             event.preventDefault();
 
             const shipIndex = board.getShipIndex(getCellIndex(cellComponent));
@@ -214,6 +201,36 @@ export function generateBoard(board, mutable) {
   }
 
   return boardComponent;
+}
+
+export function randomizeShipFormation(board) {
+  const ships = [5, 4, 3, 3, 2];
+
+  board.ships = [];
+  board.cells.forEach((row) => {
+    row.fill(CellState.EMPTY);
+  });
+
+  for (const ship of ships) {
+    let placed = false;
+    while (!placed) {
+      const orientation =
+        Math.random() > 0.5
+          ? ShipOrientation.HORIZONTAL
+          : ShipOrientation.VERTICAL;
+
+      const x = Math.floor(
+        Math.random() *
+          (10 - (orientation === ShipOrientation.HORIZONTAL ? ship : 0)),
+      );
+      const y = Math.floor(
+        Math.random() *
+          (10 - (orientation === ShipOrientation.VERTICAL ? ship : 0)),
+      );
+
+      placed = board.placeShip([x, y], ship, orientation);
+    }
+  }
 }
 
 function getCellIndex(cell) {
@@ -242,7 +259,7 @@ function getCellClassName(coordinates, board, secret = false) {
   }
 }
 
-function clearShipMovement(boardComponent) {
+export function clearShipMovement(boardComponent) {
   const movingCells = boardComponent.querySelectorAll(".moving");
   if (movingCells.length === 0) return;
 
@@ -282,5 +299,31 @@ function toggleShipMotion(coordinates, board, boardComponent) {
         ].classList.toggle("moving");
       }
       break;
+  }
+}
+
+function receiveComputerAttack(board, boardComponent) {
+  let x = Math.floor(Math.random() * board.size);
+  let y = Math.floor(Math.random() * board.size);
+
+  while (true) {
+    const cell = boardComponent.children[y].children[x];
+
+    if (!cell.classList.contains("empty") && !cell.classList.contains("ship")) {
+      x = Math.floor(Math.random() * board.size);
+      y = Math.floor(Math.random() * board.size);
+    } else {
+      break;
+    }
+  }
+
+  board.receiveAttack([x, y]);
+  boardComponent.dispatchEvent(refreshBoardEvent);
+
+  if (board.isFleetDestroyed()) {
+    const gameLostOverlay = document.createElement("div");
+    gameLostOverlay.classList.add("game-over-overlay");
+    gameLostOverlay.textContent = "YOU LOST THE GAME!";
+    boardComponent.appendChild(gameLostOverlay);
   }
 }
