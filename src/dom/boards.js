@@ -54,6 +54,7 @@ export function setupGameBoards() {
 
   const playerOneBoardComponent = generateBoard(playerOne.board, true);
   playerOneBoardComponent.classList.add("player-one", "human");
+
   playerOneBoardComponent.addEventListener("refresh-board", () => {
     Array.from(playerOneBoardComponent.children).forEach((row, i) => {
       Array.from(row.children).forEach((cell, j) => {
@@ -65,22 +66,18 @@ export function setupGameBoards() {
       });
     });
   });
+  playerOneBoardComponent.addEventListener(
+    "click",
+    () => clearShipMovement(playerOneBoardComponent),
+    true,
+  );
 
   function shipMovementHandler(event) {
     const movingShipCell = playerOneBoardComponent.querySelector(".moving");
 
     if (!movingShipCell) return;
 
-    const movingShipCoordinates = [
-      Array.prototype.indexOf.call(
-        movingShipCell.parentNode.children,
-        movingShipCell,
-      ),
-      Array.prototype.indexOf.call(
-        movingShipCell.parentNode.parentNode.children,
-        movingShipCell.parentNode,
-      ),
-    ];
+    const movingShipCoordinates = getCellIndex(movingShipCell);
     const movingShipIndex = playerOne.board.getShipIndex(movingShipCoordinates);
 
     toggleShipMotion(
@@ -132,7 +129,7 @@ export function setupGameBoards() {
 
     playerOneBoardComponent.dispatchEvent(refreshBoardEvent);
 
-    const movedShip = playerOne.board.ships[playerOne.board.ships.length - 1];
+    const movedShip = playerOne.board.ships[movingShipIndex];
     toggleShipMotion(
       movedShip.coordinates,
       playerOne.board,
@@ -180,9 +177,11 @@ export function generateBoard(board, mutable) {
       }
 
       if (mutable) {
-        cellComponent.addEventListener("click", () =>
-          toggleShipMotion([j, i], board, boardComponent, true),
-        );
+        cellComponent.addEventListener("click", () => {
+          if (cellComponent.classList.contains("ship")) {
+            toggleShipMotion([j, i], board, boardComponent);
+          }
+        });
       }
       rowComponent.appendChild(cellComponent);
     }
@@ -190,6 +189,16 @@ export function generateBoard(board, mutable) {
   }
 
   return boardComponent;
+}
+
+function getCellIndex(cell) {
+  return [
+    Array.prototype.indexOf.call(cell.parentNode.children, cell),
+    Array.prototype.indexOf.call(
+      cell.parentNode.parentNode.children,
+      cell.parentNode,
+    ),
+  ];
 }
 
 function getCellClassName(coordinates, board) {
@@ -208,25 +217,22 @@ function getCellClassName(coordinates, board) {
   }
 }
 
-function toggleShipMotion(
-  coordinates,
-  board,
-  boardComponent,
-  shouldClearBoard = false,
-) {
+function clearShipMovement(boardComponent) {
+  const movingCells = boardComponent.querySelectorAll(".moving");
+  if (movingCells.length === 0) return;
+
+  for (const cell of movingCells) {
+    cell.classList.remove("moving");
+  }
+}
+
+function toggleShipMotion(coordinates, board, boardComponent) {
   const cell = boardComponent.children[coordinates[1]].children[coordinates[0]];
 
   if (!cell.classList.contains("ship")) return;
 
   const shipIndex = board.getShipIndex(coordinates);
   let ship = board.ships[shipIndex];
-
-  if (shouldClearBoard) {
-    const movingCells = boardComponent.querySelectorAll(".moving");
-    for (const cell of movingCells) {
-      cell.classList.remove("moving");
-    }
-  }
 
   switch (ship.orientation) {
     case ShipOrientation.HORIZONTAL:

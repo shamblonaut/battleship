@@ -111,7 +111,7 @@ export function createGameBoard(size) {
         return false;
       }
 
-      this.ships.splice(shipIndex, 1);
+      this.ships[shipIndex] = this.ships.pop();
 
       return true;
     },

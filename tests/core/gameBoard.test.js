@@ -94,15 +94,19 @@ describe("GameBoard", () => {
 
     newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);
     newBoard.placeShip([3, 3], 4, ShipOrientation.VERTICAL);
+    newBoard.placeShip([6, 6], 4, ShipOrientation.HORIZONTAL);
 
     expect(newBoard.moveShip(1, [2, 3])).toBe(false);
     expect(newBoard.moveShip(1, [4, 4])).toBe(true);
     expect(newBoard.moveShip(1, [4, 5])).toBe(true);
     expect(newBoard.moveShip(1, [2, 4])).toBe(false);
 
+    expect(newBoard.moveShip(2, [6, 7])).toBe(true);
+
     expect(() => newBoard.moveShip(3, [5, 5])).toThrow("Ship does not exist");
 
     expect(newBoard.ships[1].coordinates).toEqual([4, 5]);
+    expect(newBoard.ships[2].coordinates).toEqual([6, 7]);
   });
 
   it("relays that a ship has been hit", () => {
