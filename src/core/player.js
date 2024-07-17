@@ -1,4 +1,4 @@
-import { createGameBoard } from "./gameBoard";
+import { createGameBoard } from "./gameBoard.js";
 
 export const PlayerType = Object.freeze({
   HUMAN: "HUMAN",

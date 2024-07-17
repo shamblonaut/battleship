@@ -1,4 +1,4 @@
-import { createShip, ShipOrientation } from "./ship";
+import { createShip, ShipOrientation } from "./ship.js";
 
 export const CellState = Object.freeze({
   EMPTY: 0,
@@ -64,6 +64,92 @@ export function createGameBoard(size) {
       }
 
       return true;
+    },
+
+    moveShip: function (shipIndex, coordinates) {
+      const ship = this.ships[shipIndex];
+      if (!ship) {
+        throw new Error("Ship does not exist");
+      }
+
+      if (ship.orientation === ShipOrientation.HORIZONTAL) {
+        for (
+          let i = ship.coordinates[0];
+          i <= ship.coordinates[0] + ship.length - 1;
+          i++
+        ) {
+          this.cells[ship.coordinates[1]][i] = CellState.EMPTY;
+        }
+      } else if (ship.orientation === ShipOrientation.VERTICAL) {
+        for (
+          let i = ship.coordinates[1];
+          i <= ship.coordinates[1] + ship.length - 1;
+          i++
+        ) {
+          this.cells[i][ship.coordinates[0]] = CellState.EMPTY;
+        }
+      }
+
+      if (!this.placeShip(coordinates, ship.length, ship.orientation)) {
+        if (ship.orientation === ShipOrientation.HORIZONTAL) {
+          for (
+            let i = ship.coordinates[0];
+            i <= ship.coordinates[0] + ship.length - 1;
+            i++
+          ) {
+            this.cells[ship.coordinates[1]][i] = CellState.SHIP;
+          }
+        } else if (ship.orientation === ShipOrientation.VERTICAL) {
+          for (
+            let i = ship.coordinates[1];
+            i <= ship.coordinates[1] + ship.length - 1;
+            i++
+          ) {
+            this.cells[i][ship.coordinates[0]] = CellState.SHIP;
+          }
+        }
+        return false;
+      }
+
+      this.ships.splice(shipIndex, 1);
+
+      return true;
+    },
+
+    getShipIndex: function (coordinates) {
+      for (let i = 0; i < this.ships.length; i++) {
+        if (this.ships[i].orientation === ShipOrientation.HORIZONTAL) {
+          for (
+            let j = this.ships[i].coordinates[0];
+            j <= this.ships[i].coordinates[0] + this.ships[i].length - 1;
+            j++
+          ) {
+            if (
+              coordinates[0] === j &&
+              coordinates[1] === this.ships[i].coordinates[1]
+            ) {
+              return i;
+            }
+          }
+        } else if (this.ships[i].orientation === ShipOrientation.VERTICAL) {
+          for (
+            let j = this.ships[i].coordinates[1];
+            j <= this.ships[i].coordinates[1] + this.ships[i].length - 1;
+            j++
+          ) {
+            if (
+              coordinates[0] === this.ships[i].coordinates[0] &&
+              coordinates[1] === j
+            ) {
+              return i;
+            }
+          }
+        }
+      }
+
+      throw new Error(
+        `No ship found at given index: [${coordinates[0]}, ${coordinates[1]}]`,
+      );
     },
 
     receiveAttack: function (coordinates) {

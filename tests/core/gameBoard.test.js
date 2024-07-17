@@ -74,6 +74,37 @@ describe("GameBoard", () => {
     expect(newBoard.placeShip([6, 8], 4, ShipOrientation.VERTICAL)).toBe(false);
   });
 
+  it("gives index of a ship at the given coordinates", () => {
+    const newBoard = createGameBoard(10);
+    newBoard.placeShip([2, 2], 5, ShipOrientation.VERTICAL);
+    newBoard.placeShip([4, 4], 4, ShipOrientation.HORIZONTAL);
+
+    expect(newBoard.getShipIndex([2, 2])).toBe(0);
+    expect(newBoard.getShipIndex([2, 5])).toBe(0);
+    expect(newBoard.getShipIndex([5, 4])).toBe(1);
+    expect(newBoard.getShipIndex([7, 4])).toBe(1);
+
+    expect(() => newBoard.getShipIndex([5, 5])).toThrow(
+      "No ship found at given index: [5, 5]",
+    );
+  });
+
+  it("allows ships to be moved from their original position", () => {
+    const newBoard = createGameBoard(10);
+
+    newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);
+    newBoard.placeShip([3, 3], 4, ShipOrientation.VERTICAL);
+
+    expect(newBoard.moveShip(1, [2, 3])).toBe(false);
+    expect(newBoard.moveShip(1, [4, 4])).toBe(true);
+    expect(newBoard.moveShip(1, [4, 5])).toBe(true);
+    expect(newBoard.moveShip(1, [2, 4])).toBe(false);
+
+    expect(() => newBoard.moveShip(3, [5, 5])).toThrow("Ship does not exist");
+
+    expect(newBoard.ships[1].coordinates).toEqual([4, 5]);
+  });
+
   it("relays that a ship has been hit", () => {
     const newBoard = createGameBoard(10);
     newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);
