@@ -5,7 +5,7 @@
   --board-border-radius: 8px;
   --board-background: #89dceb;
 
-  --cell-size: 48px;
+  --cell-size: 40px;
   --cell-border-radius: 4px;
   --cell-background: #74c7ec;
 }
@@ -19,17 +19,21 @@
 
 header {
   font-size: 3rem;
-  margin-bottom: 64px;
+  font-weight: 700;
+  margin-bottom: 8vh;
+  color: #11111b;
 }
 
 .boards {
+  width: 100%;
   display: grid;
+  justify-items: center;
   grid-template-columns: 1fr 1fr;
-  grid-gap: 64px;
-  margin-bottom: 64px;
+  margin-bottom: 5vh;
 }
 
 .board {
+  width: min-content;
   display: grid;
   grid-auto-flow: row;
   grid-gap: var(--grid-gap);
@@ -113,15 +117,91 @@ header {
   height: calc(100% - var(--grid-gap) * 4 - 3px);
   border-radius: var(--board-border-radius);
   background-color: #74c7eca0;
+  color: #ffffff;
 
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
 }
 
 .hidden {
   display: none;
+}
+
+.controls:not(.hidden),
+.info:not(.hidden) {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
+}
+
+.controls button,
+.restart {
+  align-items: center;
+  appearance: none;
+  background-image: radial-gradient(
+    100% 100% at 100% 0,
+    #5adaff 0,
+    #5468ff 100%
+  );
+  border: 0;
+  border-radius: 6px;
+  box-shadow:
+    rgba(45, 35, 66, 0.4) 0 2px 4px,
+    rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
+    rgba(58, 65, 111, 0.5) 0 -3px 0 inset;
+  box-sizing: border-box;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  line-height: 1;
+  list-style: none;
+  overflow: hidden;
+  padding: 16px 32px;
+  position: relative;
+  text-align: left;
+  text-decoration: none;
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: nowrap;
+  will-change: box-shadow, transform;
+  font-size: 18px;
+}
+
+.controls button:focus,
+.restart:focus {
+  box-shadow:
+    #3c4fe0 0 0 0 1.5px inset,
+    rgba(45, 35, 66, 0.4) 0 2px 4px,
+    rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
+    #3c4fe0 0 -3px 0 inset;
+}
+
+.controls button:hover,
+.restart:hover {
+  box-shadow:
+    rgba(45, 35, 66, 0.4) 0 4px 8px,
+    rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
+    #3c4fe0 0 -3px 0 inset;
+  transform: translateY(-2px);
+}
+
+.controls button:active,
+.restart:active {
+  box-shadow: #3c4fe0 0 3px 7px inset;
+  transform: translateY(2px);
+}
+
+.info p {
+  font-size: 2rem;
+  font-weight: 700;
 }

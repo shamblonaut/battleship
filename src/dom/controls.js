@@ -9,11 +9,11 @@ export function setupControls() {
     const root = document.querySelector("#root");
     root.classList.add("game-started");
 
-    const startButton = document.querySelector(".start");
-    startButton.classList.add("hidden");
+    const controlsSection = document.querySelector(".controls");
+    controlsSection.classList.add("hidden");
 
-    const randomizeButton = document.querySelector(".randomize");
-    randomizeButton.classList.add("hidden");
+    const infoSection = document.querySelector(".info");
+    infoSection.classList.remove("hidden");
   });
 
   document.addEventListener("game-over", () => {
@@ -25,11 +25,11 @@ export function setupControls() {
       restartButton.addEventListener("click", () => {
         document.dispatchEvent(restartGameEvent);
 
-        const startButton = document.querySelector(".start");
-        startButton.classList.remove("hidden");
+        const controlsSection = document.querySelector(".controls");
+        controlsSection.classList.remove("hidden");
 
-        const randomizeButton = document.querySelector(".randomize");
-        randomizeButton.classList.remove("hidden");
+        const infoSection = document.querySelector(".info");
+        infoSection.classList.add("hidden");
       });
     }
   });

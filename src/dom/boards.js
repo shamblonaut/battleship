@@ -41,9 +41,12 @@ export function setupGameBoards(playerOne, playerTwo) {
     true,
   );
 
-  document.addEventListener("receive-attack", () => {
+  document.addEventListener("receive-attack", async () => {
     if (playerTwo.type === PlayerType.COMPUTER) {
-      receiveComputerAttack(playerOne.board, playerOneBoardComponent);
+      await receiveComputerAttack(playerOne.board, playerOneBoardComponent);
+
+      document.querySelector(".board-one-info").textContent = "";
+      document.querySelector(".board-two-info").textContent = "Your Turn";
     }
   });
 
@@ -144,6 +147,8 @@ export function setupGameBoards(playerOne, playerTwo) {
     playerTwoBoardComponent.dispatchEvent(randomizeBoardEvent);
   });
 
+  document.querySelector(".board-two-info").textContent = "Your Turn";
+
   return [playerOneBoardComponent, playerTwoBoardComponent];
 }
 
@@ -185,6 +190,9 @@ export function generateBoard(board, mutable) {
             return;
           }
 
+          document.querySelector(".board-one-info").textContent =
+            "Computer is thinking...";
+          document.querySelector(".board-two-info").textContent = "";
           document.dispatchEvent(receiveAttackEvent);
         });
       }
@@ -318,7 +326,7 @@ function toggleShipMotion(coordinates, board, boardComponent) {
   }
 }
 
-function receiveComputerAttack(board, boardComponent) {
+async function receiveComputerAttack(board, boardComponent) {
   let x = Math.floor(Math.random() * board.size);
   let y = Math.floor(Math.random() * board.size);
 
@@ -332,6 +340,8 @@ function receiveComputerAttack(board, boardComponent) {
       break;
     }
   }
+
+  await new Promise((r) => setTimeout(r, 1000));
 
   board.receiveAttack([x, y]);
   boardComponent.dispatchEvent(refreshBoardEvent);
