@@ -109,6 +109,33 @@ describe("GameBoard", () => {
     expect(newBoard.ships[2].coordinates).toEqual([6, 7]);
   });
 
+  it("allows ships to be rotated around their original position", () => {
+    const newBoard = createGameBoard(10);
+
+    newBoard.placeShip([1, 3], 4, ShipOrientation.VERTICAL);
+    newBoard.placeShip([3, 3], 4, ShipOrientation.HORIZONTAL);
+
+    newBoard.placeShip([1, 8], 3, ShipOrientation.HORIZONTAL);
+    newBoard.placeShip([8, 1], 3, ShipOrientation.VERTICAL);
+
+    expect(newBoard.rotateShip(0)).toBe(false);
+    expect(newBoard.ships[0].orientation).toBe(ShipOrientation.VERTICAL);
+
+    expect(newBoard.rotateShip(1)).toBe(true);
+    expect(newBoard.ships[1].orientation).toBe(ShipOrientation.VERTICAL);
+
+    expect(newBoard.rotateShip(1)).toBe(true);
+    expect(newBoard.ships[1].orientation).toBe(ShipOrientation.HORIZONTAL);
+
+    newBoard.moveShip(1, [5, 6]);
+
+    expect(newBoard.rotateShip(0)).toBe(true);
+    expect(newBoard.ships[0].orientation).toBe(ShipOrientation.HORIZONTAL);
+
+    expect(newBoard.rotateShip(2)).toBe(false);
+    expect(newBoard.rotateShip(3)).toBe(false);
+  });
+
   it("relays that a ship has been hit", () => {
     const newBoard = createGameBoard(10);
     newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);

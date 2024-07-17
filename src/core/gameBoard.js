@@ -116,6 +116,83 @@ export function createGameBoard(size) {
       return true;
     },
 
+    rotateShip: function (shipIndex) {
+      const ship = this.ships[shipIndex];
+      if (!ship) {
+        throw new Error("Ship does not exist");
+      }
+
+      const newOrientation =
+        ship.orientation === ShipOrientation.HORIZONTAL
+          ? ShipOrientation.VERTICAL
+          : ShipOrientation.HORIZONTAL;
+
+      if (newOrientation === ShipOrientation.HORIZONTAL) {
+        if (ship.coordinates[0] + ship.length - 1 >= this.size) {
+          return false;
+        }
+
+        for (
+          let i = ship.coordinates[0] + 1;
+          i <= ship.coordinates[0] + ship.length - 1;
+          i++
+        ) {
+          if (this.cells[ship.coordinates[1]][i] !== CellState.EMPTY) {
+            return false;
+          }
+        }
+      } else if (newOrientation === ShipOrientation.VERTICAL) {
+        if (ship.coordinates[1] + ship.length - 1 >= this.size) {
+          return false;
+        }
+
+        for (
+          let i = ship.coordinates[1] + 1;
+          i <= ship.coordinates[1] + ship.length - 1;
+          i++
+        ) {
+          if (this.cells[i][ship.coordinates[0]] !== CellState.EMPTY) {
+            return false;
+          }
+        }
+      }
+
+      if (newOrientation === ShipOrientation.HORIZONTAL) {
+        for (
+          let i = ship.coordinates[1];
+          i <= ship.coordinates[1] + ship.length - 1;
+          i++
+        ) {
+          this.cells[i][ship.coordinates[0]] = CellState.EMPTY;
+        }
+        for (
+          let i = ship.coordinates[0];
+          i <= ship.coordinates[0] + ship.length - 1;
+          i++
+        ) {
+          this.cells[ship.coordinates[1]][i] = CellState.SHIP;
+        }
+      } else if (newOrientation === ShipOrientation.VERTICAL) {
+        for (
+          let i = ship.coordinates[0];
+          i <= ship.coordinates[0] + ship.length - 1;
+          i++
+        ) {
+          this.cells[ship.coordinates[1]][i] = CellState.EMPTY;
+        }
+        for (
+          let i = ship.coordinates[1];
+          i <= ship.coordinates[1] + ship.length - 1;
+          i++
+        ) {
+          this.cells[i][ship.coordinates[0]] = CellState.SHIP;
+        }
+      }
+
+      ship.orientation = newOrientation;
+      return true;
+    },
+
     getShipIndex: function (coordinates) {
       for (let i = 0; i < this.ships.length; i++) {
         if (this.ships[i].orientation === ShipOrientation.HORIZONTAL) {

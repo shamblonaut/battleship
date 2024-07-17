@@ -182,6 +182,24 @@ export function generateBoard(board, mutable) {
             toggleShipMotion([j, i], board, boardComponent);
           }
         });
+        cellComponent.addEventListener("contextmenu", (event) => {
+          if (cellComponent.classList.contains("ship")) {
+            event.preventDefault();
+
+            const shipIndex = board.getShipIndex(getCellIndex(cellComponent));
+            const ship = board.ships[shipIndex];
+
+            if (!cellComponent.classList.contains("moving")) {
+              toggleShipMotion(ship.coordinates, board, boardComponent);
+            }
+
+            if (board.rotateShip(shipIndex)) {
+              clearShipMovement(boardComponent);
+              toggleShipMotion(ship.coordinates, board, boardComponent);
+              boardComponent.dispatchEvent(refreshBoardEvent);
+            }
+          }
+        });
       }
       rowComponent.appendChild(cellComponent);
     }
