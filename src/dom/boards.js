@@ -145,7 +145,7 @@ export function setupGameBoards() {
     Array.from(playerTwoBoardComponent.children).forEach((row, i) => {
       Array.from(row.children).forEach((cell, j) => {
         cell.className = "cell";
-        cell.classList.add(getCellClassName([j, i], playerTwo.board));
+        cell.classList.add(getCellClassName([j, i], playerTwo.board, true));
       });
     });
   });
@@ -173,6 +173,13 @@ export function generateBoard(board, mutable) {
 
           board.receiveAttack([j, i]);
           boardComponent.dispatchEvent(refreshBoardEvent);
+
+          if (board.isFleetDestroyed()) {
+            const gameWonOverlay = document.createElement("div");
+            gameWonOverlay.classList.add("game-won-overlay");
+            gameWonOverlay.textContent = "YOU WON THE GAME!";
+            boardComponent.appendChild(gameWonOverlay);
+          }
         });
       }
 
@@ -219,7 +226,7 @@ function getCellIndex(cell) {
   ];
 }
 
-function getCellClassName(coordinates, board) {
+function getCellClassName(coordinates, board, secret = false) {
   const cell = board.cells[coordinates[1]][coordinates[0]];
   switch (cell) {
     case CellState.EMPTY:
@@ -227,7 +234,7 @@ function getCellClassName(coordinates, board) {
     case CellState.MISS:
       return "miss";
     case CellState.SHIP:
-      return "ship";
+      return secret ? "empty" : "ship";
     case CellState.HIT:
       return "hit";
     case CellState.SUNK:
