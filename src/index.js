@@ -10,7 +10,6 @@ const root = document.getElementById("root");
 root.innerHTML = `
   <header>
     <h1>Battleship</h1>
-    <a class="help">How to Play</a>
   </header>
   <div class="opponent">
     <p>Opponent: </p>
@@ -19,6 +18,7 @@ root.innerHTML = `
       <p class="opponent-friend">Friend</p>
     </div>
   </div>
+  <a class="help-link">How to Play</a>
   <div class="controls">
     <button class="start">Start Game</button>
     <button class="reset hidden">Reset Game</button>

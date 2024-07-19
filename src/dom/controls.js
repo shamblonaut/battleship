@@ -47,7 +47,7 @@ export function setupControls(game) {
     );
   });
 
-  const helpLink = document.querySelector(".help");
+  const helpLink = document.querySelector(".help-link");
   helpLink.addEventListener("click", () => {
     const modalOverlay = document.createElement("div");
     modalOverlay.classList.add("modal-overlay");

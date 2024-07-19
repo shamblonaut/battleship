@@ -101,6 +101,49 @@ header a {
   text-align: center;
 }
 
+.opponent {
+  margin: 16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  order: 1;
+}
+
+.opponent > p {
+  padding: 8px;
+}
+
+.opponent .options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
+  align-items: center;
+  padding: 8px;
+  grid-gap: 16px;
+  background-color: var(--board-background);
+  border-radius: 8px;
+}
+
+.options p {
+  width: 256px;
+  text-align: center;
+  padding: 8px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.options p.active-mode {
+  box-shadow: #3c4fe0c0 0 3px 7px inset;
+}
+
+.help-link {
+  order: 2;
+  margin-top: 8px;
+}
+
 .modal-overlay {
   position: absolute;
   background-color: #11111ba0;
@@ -174,50 +217,12 @@ td:last-child {
     brightness(100%) contrast(100%);
 }
 
-.opponent {
-  margin: 16px;
-  padding-left: 16px;
-  padding-right: 16px;
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: 700;
-  order: 2;
-}
-
-.opponent > p {
-  padding: 8px;
-}
-
-.opponent .options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  justify-items: center;
-  align-items: center;
-  padding: 8px;
-  grid-gap: 16px;
-  background-color: var(--board-background);
-  border-radius: 8px;
-}
-
-.options p {
-  width: 256px;
-  text-align: center;
-  padding: 8px 0;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.options p.active-mode {
-  box-shadow: #3c4fe0c0 0 3px 7px inset;
-}
-
 .controls:not(.hidden) {
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-top: 16px;
-  order: 2;
+  margin: 8px;
+  order: 3;
 }
 
 .controls:has(> .start.hidden) {
@@ -266,10 +271,10 @@ td:last-child {
 .board.active {
   transform: translateY(-8px);
   box-shadow:
-    rgba(0, 100, 100, 0.6) 0px 4px 8px,
-    rgba(0, 100, 100, 0.6) 0px 12px 12px -3px,
-    rgba(0, 100, 100, 0.6) 0px 0px 12px,
-    rgba(0, 100, 100, 0.2) 0px -6px 0px inset;
+    rgb(249, 215, 126, 0.6) 0px 4px 8px,
+    rgb(249, 215, 126, 0.6) 0px 12px 12px -3px,
+    rgb(249, 215, 126, 0.3) 0px 0px 12px 12px,
+    rgba(0, 0, 0, 0.2) 0px -6px 0px inset;
 }
 
 .board-header {
@@ -472,7 +477,6 @@ td:last-child {
   }
 
   .opponent {
-    order: 1;
     margin: 8px;
     padding: 8px;
     font-size: 1rem;
@@ -490,15 +494,6 @@ td:last-child {
     width: 128px;
   }
 
-  .controls {
-    margin: 16px;
-    order: 2;
-  }
-
-  .in-progress .controls {
-    order: 4;
-  }
-
   .boards,
   .info:not(.hidden) {
     grid-template-columns: 1fr;
@@ -507,7 +502,6 @@ td:last-child {
   }
 
   .boards {
-    order: 3;
     margin-top: 4px;
   }
 
