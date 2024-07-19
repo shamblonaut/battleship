@@ -2,17 +2,34 @@ import { CellState } from "../core/gameBoard.js";
 import { PlayerType } from "../core/player.js";
 import { ShipOrientation } from "../core/ship.js";
 
+import refreshSvg from "../../assets/refresh-ccw.svg";
+import editSvg from "../../assets/edit.svg";
+import saveSvg from "../../assets/save.svg";
+
 export function setupGameBoards(game, playerOne, playerTwo) {
-  const boardOne = createBoardComponent(playerOne.board, true);
+  const boardOne = createBoardComponent(
+    playerOne.board,
+    playerOne,
+    playerTwo.type !== PlayerType.COMPUTER,
+    playerOne.type === PlayerType.HUMAN,
+  );
   boardOne.randomizeFormation();
 
   boardOne.component.classList.add(
     "player-one",
     playerOne.type === PlayerType.HUMAN ? "human" : "computer",
   );
+  if (playerTwo.type === PlayerType.COMPUTER) {
+    boardOne.component.classList.add("only-human");
+  }
   boardOne.component.addEventListener("click", () => boardOne.clear(), true);
 
-  const boardTwo = createBoardComponent(playerTwo.board, false);
+  const boardTwo = createBoardComponent(
+    playerTwo.board,
+    playerTwo,
+    playerOne.type !== PlayerType.COMPUTER,
+    playerTwo.type === PlayerType.HUMAN,
+  );
   boardTwo.randomizeFormation();
 
   boardTwo.component.classList.add(
@@ -21,28 +38,32 @@ export function setupGameBoards(game, playerOne, playerTwo) {
   );
 
   for (const DOMBoard of [boardOne, boardTwo]) {
-    Array.from(DOMBoard.component.children).forEach((row, i) => {
+    Array.from(DOMBoard.component.children[1].children).forEach((row, i) => {
       Array.from(row.children).forEach((cell, j) => {
         cell.addEventListener("click", () => {
           if (
+            DOMBoard.editing &&
             DOMBoard.isMutable() &&
             cell.classList.contains("ship") &&
             !game.isInProgress
           ) {
             DOMBoard.toggleShipMotion([j, i]);
           } else if (
-            !DOMBoard.isMutable() &&
+            DOMBoard.isAttackable() &&
+            DOMBoard.active &&
             game.isInProgress &&
             !game.isGameOver &&
             game.isPlayerWaiting
           ) {
-            DOMBoard.receiveAttack([j, i]);
-            game.isPlayerWaiting = false;
+            if (DOMBoard.receiveAttack([j, i])) {
+              game.isPlayerWaiting = false;
+            }
           }
         });
 
         cell.addEventListener("contextmenu", (event) => {
           if (
+            !DOMBoard.editing ||
             !DOMBoard.isMutable() ||
             game.isInProgress ||
             !cell.classList.contains("ship")
@@ -69,14 +90,60 @@ export function setupGameBoards(game, playerOne, playerTwo) {
     });
   }
 
-  document.addEventListener("keydown", (event) => boardOne.moveShip(event.key));
+  document.addEventListener("keydown", (event) => {
+    if (boardOne.editing) boardOne.moveShip(event.key);
+    else if (boardTwo.editing) boardTwo.moveShip(event.key);
+  });
 
   return [boardOne, boardTwo];
 }
 
-export function createBoardComponent(board, mutable) {
+export function createBoardComponent(board, player, attackable, mutable) {
   const boardComponent = document.createElement("div");
   boardComponent.classList.add("board");
+
+  const boardHeader = document.createElement("form");
+  boardHeader.classList.add("board-header");
+  boardHeader.innerHTML = `
+    <p class="player-name">${player.name}</p>
+    <input class="player-name-input hidden" type="text" required value="${player.name}" />
+  `;
+  boardComponent.appendChild(boardHeader);
+
+  let randomizeButton, editButton, saveButton;
+  if (player.type === PlayerType.HUMAN) {
+    randomizeButton = document.createElement("button");
+    randomizeButton.classList.add("randomize-board");
+    randomizeButton.type = "button";
+    const refreshIcon = new Image();
+    refreshIcon.src = refreshSvg;
+    randomizeButton.appendChild(refreshIcon);
+
+    editButton = document.createElement("button");
+    editButton.classList.add("edit-board");
+    editButton.type = "button";
+    const editIcon = new Image();
+    editIcon.src = editSvg;
+    editButton.appendChild(editIcon);
+
+    saveButton = document.createElement("button");
+    saveButton.classList.add("save-board", "hidden");
+    saveButton.type = "button";
+    const saveIcon = new Image();
+    saveIcon.src = saveSvg;
+    saveButton.appendChild(saveIcon);
+
+    const boardControls = document.createElement("div");
+    boardControls.classList.add("board-controls");
+    boardControls.appendChild(randomizeButton);
+    boardControls.appendChild(editButton);
+    boardControls.appendChild(saveButton);
+    boardHeader.appendChild(boardControls);
+  }
+
+  const boardCells = document.createElement("div");
+  boardCells.classList.add("board-cells");
+  boardComponent.appendChild(boardCells);
 
   for (let i = 0; i < board.cells.length; i++) {
     const rowComponent = document.createElement("div");
@@ -89,20 +156,26 @@ export function createBoardComponent(board, mutable) {
       rowComponent.appendChild(cellComponent);
     }
 
-    boardComponent.appendChild(rowComponent);
+    boardCells.appendChild(rowComponent);
   }
 
-  return {
+  const DOMBoard = {
     component: boardComponent,
     board: board,
     active: false,
+    editing: false,
+
+    isAttackable: function () {
+      return attackable;
+    },
 
     isMutable: function () {
       return mutable;
     },
 
     clear: function () {
-      const movingCells = this.component.querySelectorAll(".moving");
+      const movingCells =
+        this.component.children[1].querySelectorAll(".moving");
       if (movingCells.length === 0) return;
       for (const cell of movingCells) {
         cell.classList.remove("moving");
@@ -110,7 +183,7 @@ export function createBoardComponent(board, mutable) {
     },
 
     render: function () {
-      Array.from(this.component.children).forEach((row, i) => {
+      Array.from(this.component.children[1].children).forEach((row, i) => {
         Array.from(row.children).forEach((cell, j) => {
           const isMoving = cell.classList.contains("moving");
 
@@ -144,7 +217,7 @@ export function createBoardComponent(board, mutable) {
               (10 - (orientation === ShipOrientation.VERTICAL ? ship : 0)),
           );
 
-          placed = board.placeShip([x, y], ship, orientation);
+          placed = this.board.placeShip([x, y], ship, orientation);
         }
       }
 
@@ -153,7 +226,9 @@ export function createBoardComponent(board, mutable) {
 
     toggleShipMotion: function (coordinates) {
       const cell =
-        this.component.children[coordinates[1]].children[coordinates[0]];
+        this.component.children[1].children[coordinates[1]].children[
+          coordinates[0]
+        ];
 
       if (!cell.classList.contains("ship")) return;
 
@@ -167,7 +242,7 @@ export function createBoardComponent(board, mutable) {
             i <= ship.coordinates[0] + ship.length - 1;
             i++
           ) {
-            this.component.children[ship.coordinates[1]].children[
+            this.component.children[1].children[ship.coordinates[1]].children[
               i
             ].classList.toggle("moving");
           }
@@ -178,7 +253,7 @@ export function createBoardComponent(board, mutable) {
             i <= ship.coordinates[1] + ship.length - 1;
             i++
           ) {
-            this.component.children[i].children[
+            this.component.children[1].children[i].children[
               ship.coordinates[0]
             ].classList.toggle("moving");
           }
@@ -187,7 +262,8 @@ export function createBoardComponent(board, mutable) {
     },
 
     moveShip: function (key) {
-      const movingShipCell = this.component.querySelector(".moving");
+      const movingShipCell =
+        this.component.children[1].querySelector(".moving");
 
       if (!movingShipCell) return;
 
@@ -237,21 +313,22 @@ export function createBoardComponent(board, mutable) {
 
       const movedShip = this.board.ships[movingShipIndex];
       this.toggleShipMotion(movedShip.coordinates);
+
+      console.log("doing something?");
     },
 
     receiveAttack: function (coordinates) {
       const cell = board.cells[coordinates[1]][coordinates[0]];
-      if (
-        (cell !== CellState.EMPTY && cell !== CellState.SHIP) ||
-        !this.active
-      ) {
-        return;
+      if (cell !== CellState.EMPTY && cell !== CellState.SHIP) {
+        return false;
       }
 
       board.receiveAttack(coordinates);
       this.render();
 
       this.active = false;
+
+      return true;
     },
 
     computerAttack: async function () {
@@ -262,7 +339,7 @@ export function createBoardComponent(board, mutable) {
         x = Math.floor(Math.random() * board.size);
         y = Math.floor(Math.random() * board.size);
 
-        const cell = this.component.children[y].children[x];
+        const cell = this.component.children[1].children[y].children[x];
         if (
           cell.classList.contains("empty") ||
           cell.classList.contains("ship")
@@ -277,6 +354,56 @@ export function createBoardComponent(board, mutable) {
       this.render();
     },
   };
+
+  function saveEdits() {
+    if (!DOMBoard.component.children[0].reportValidity()) return;
+    boardHeader.querySelector(".player-name").classList.remove("hidden");
+    boardHeader.querySelector(".player-name-input").classList.add("hidden");
+    boardHeader.querySelector(".edit-board").classList.remove("hidden");
+    saveButton.classList.add("hidden");
+
+    DOMBoard.editing = false;
+    DOMBoard.component.classList.remove("editing");
+    DOMBoard.clear();
+  }
+
+  if (player.type === PlayerType.HUMAN) {
+    randomizeButton.addEventListener("click", () => {
+      DOMBoard.randomizeFormation();
+    });
+
+    editButton.addEventListener("click", () => {
+      if (document.querySelector(".editing")) return;
+
+      const boardHeader = DOMBoard.component.children[0];
+
+      boardHeader.querySelector(".player-name").classList.add("hidden");
+      boardHeader
+        .querySelector(".player-name-input")
+        .classList.remove("hidden");
+      editButton.classList.add("hidden");
+      boardHeader.querySelector(".save-board").classList.remove("hidden");
+
+      DOMBoard.editing = true;
+      DOMBoard.component.classList.add("editing");
+    });
+
+    boardHeader
+      .querySelector(".player-name-input")
+      .addEventListener("change", (event) => {
+        player.name = event.target.value;
+        boardHeader.querySelector(".player-name").textContent = player.name;
+      });
+
+    saveButton.addEventListener("click", saveEdits);
+
+    boardHeader.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveEdits();
+    });
+  }
+
+  return DOMBoard;
 }
 
 function getCellIndex(cell) {

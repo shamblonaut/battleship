@@ -9,14 +9,22 @@ console.log("Get Ready for Battle!");
 const root = document.getElementById("root");
 root.innerHTML = `
   <header>Battleship</header>
-  <div class="boards"></div>
-  <div class="controls">
-    <button class="randomize">Randomize Formation</button>
-    <button class="start">Start Game</button>
+  <div class="opponent">
+    <p>Opponent: </p>
+    <div class="options">
+      <div class="slider slider-computer"></div>
+      <p class="opponent-computer active-mode">Computer</p>
+      <p class="opponent-friend">Friend</p>
+    </div>
   </div>
+  <div class="boards"></div>
   <div class="info hidden">
     <p class="board-one-info"></p>
     <p class="board-two-info"></p>
+  </div>
+  <div class="controls">
+    <button class="start">Start Game</button>
+    <button class="reset hidden">Reset Game</button>
   </div>
 `;
 
