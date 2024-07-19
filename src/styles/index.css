@@ -22,10 +22,10 @@
   align-items: center;
   font-family: "Poppins", sans-serif;
   color: #11111b;
+  position: relative;
 }
 
-button:not(.cell):not(.hidden),
-.slider {
+button:not(.cell):not(.hidden) {
   align-items: center;
   appearance: none;
   background-image: radial-gradient(
@@ -63,7 +63,8 @@ button:not(.cell):focus {
     #3c4fe0 0 -3px 0 inset;
 }
 
-button:not(.cell):hover {
+button:not(.cell):hover,
+.options p:not(.active-mode):hover {
   box-shadow:
     rgba(45, 35, 66, 0.4) 0 4px 8px,
     rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
@@ -76,9 +77,101 @@ button:not(.cell):active {
   transform: translateY(2px);
 }
 
+a {
+  color: #7287fd;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  order: 0;
+}
+
+header h1 {
   font-size: 3rem;
   font-weight: 700;
+  line-height: 1;
+}
+
+header a {
+  font-size: 1rem;
+  text-align: center;
+}
+
+.modal-overlay {
+  position: absolute;
+  background-color: #11111ba0;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.help-modal {
+  width: 80vw;
+  height: 80vh;
+  padding: 32px;
+  overflow: scroll;
+  font-size: 1.25rem;
+  position: relative;
+}
+
+.help-modal h1 {
+  text-align: center;
+}
+
+.help-modal section {
+  margin: 32px 0;
+}
+
+.help-modal img {
+  display: inline;
+  width: 24px;
+  height: auto;
+  transform: translateY(0.4rem);
+}
+
+table {
+  margin-left: 16px;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+th,
+td {
+  border: 1px solid #11111b;
+  padding: 4px;
+}
+
+th:first-child,
+td:first-child {
+  width: 150px;
+}
+
+th:last-child,
+td:last-child {
+  width: 100px;
+}
+
+.close-button {
+  position: absolute;
+  top: 32px;
+  right: 32px;
+  padding: 8px;
+}
+
+.close-button img {
+  width: 32px;
+  height: auto;
+  transform: translateY(-2px);
+  filter: invert(100%) sepia(100%) saturate(0%) hue-rotate(300deg)
+    brightness(100%) contrast(100%);
 }
 
 .opponent {
@@ -88,6 +181,7 @@ header {
   text-align: center;
   font-size: 1.5rem;
   font-weight: 700;
+  order: 2;
 }
 
 .opponent > p {
@@ -103,7 +197,6 @@ header {
   grid-gap: 16px;
   background-color: var(--board-background);
   border-radius: 8px;
-  position: relative;
 }
 
 .options p {
@@ -113,27 +206,27 @@ header {
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  z-index: 2;
 }
 
-.slider:not(.slider-right) ~ .opponent-computer,
-.slider.slider-right ~ .opponent-friend {
-  color: #fff;
+.options p.active-mode {
+  box-shadow: #3c4fe0c0 0 3px 7px inset;
 }
 
-.options .slider {
-  position: absolute;
-  left: 8px;
-  top: 8px;
-  width: 256px;
-  height: calc(100% - 16px);
-  z-index: 1;
-
-  transition: transform ease-in-out 200ms;
+.controls:not(.hidden) {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  order: 2;
 }
 
-.slider.slider-right {
-  transform: translateX(calc(100% + 16px));
+.controls:has(> .start.hidden) {
+  order: 6;
+}
+
+.start,
+.reset {
+  padding: 16px 32px;
 }
 
 .boards {
@@ -142,10 +235,12 @@ header {
   justify-items: center;
   grid-template-columns: 1fr 1fr;
   margin: 32px;
+  order: 4;
 }
 
 .board,
-.opponent {
+.opponent,
+.help-modal {
   background-color: var(--board-background);
   border-radius: var(--board-border-radius);
   padding-bottom: calc(var(--grid-gap) * 4 + 3px);
@@ -339,23 +434,13 @@ header {
   display: none;
 }
 
-.controls:not(.hidden) {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.start,
-.reset {
-  padding: 16px 32px;
-}
-
 .info:not(.hidden) {
   display: grid;
   width: 100%;
   grid-template-columns: 1fr 1fr;
   justify-items: center;
   margin-bottom: 32px;
+  order: 5;
 }
 
 .info p {
@@ -366,6 +451,24 @@ header {
 @media (max-width: 600px) {
   header {
     font-size: 2rem;
+  }
+
+  .help-modal {
+    font-size: 0.8rem;
+  }
+
+  .help-modal ul {
+    padding-left: 16px;
+  }
+
+  .close-button {
+    top: 16px;
+    right: 16px;
+  }
+
+  .close-button img {
+    width: 16px;
+    height: auto;
   }
 
   .opponent {
@@ -385,14 +488,6 @@ header {
 
   .options p {
     width: 128px;
-  }
-
-  .options .slider {
-    width: 128px;
-  }
-
-  .slider.slider-right {
-    transform: translateX(calc(100% + 8px));
   }
 
   .controls {

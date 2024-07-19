@@ -114,6 +114,7 @@ export function createBoardComponent(board, player, attackable, mutable) {
   if (player.type === PlayerType.HUMAN) {
     randomizeButton = document.createElement("button");
     randomizeButton.classList.add("randomize-board");
+    randomizeButton.title = "Randomize ship placement";
     randomizeButton.type = "button";
     const refreshIcon = new Image();
     refreshIcon.src = refreshSvg;
@@ -121,6 +122,7 @@ export function createBoardComponent(board, player, attackable, mutable) {
 
     editButton = document.createElement("button");
     editButton.classList.add("edit-board");
+    editButton.title = "Edit board (change name, move ships)";
     editButton.type = "button";
     const editIcon = new Image();
     editIcon.src = editSvg;
@@ -128,6 +130,7 @@ export function createBoardComponent(board, player, attackable, mutable) {
 
     saveButton = document.createElement("button");
     saveButton.classList.add("save-board", "hidden");
+    saveButton.title = "Save board";
     saveButton.type = "button";
     const saveIcon = new Image();
     saveIcon.src = saveSvg;
@@ -373,7 +376,10 @@ export function createBoardComponent(board, player, attackable, mutable) {
     });
 
     editButton.addEventListener("click", () => {
-      if (document.querySelector(".editing")) return;
+      if (document.querySelector(".editing")) {
+        alert("Please save the currently editing board first");
+        return;
+      }
 
       const boardHeader = DOMBoard.component.children[0];
 
