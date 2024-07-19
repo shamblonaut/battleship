@@ -30,7 +30,7 @@ export function setupGame(playerOne, playerTwo) {
       document.querySelector(".reset").classList.remove("hidden");
       document.querySelector(".info").classList.remove("hidden");
       document.querySelector(".opponent").classList.add("hidden");
-      document.querySelector("#root").classList.add("attack-allowed");
+      document.querySelector("#root").classList.add("in-progress");
 
       document.querySelectorAll(".board-controls").forEach((boardControls) => {
         boardControls.classList.add("hidden");
@@ -47,6 +47,7 @@ export function setupGame(playerOne, playerTwo) {
       document.querySelector(".reset").classList.add("hidden");
       document.querySelector(".info").classList.add("hidden");
       document.querySelector(".opponent").classList.remove("hidden");
+      document.querySelector("#root").classList.remove("in-progress");
       document.querySelector("#root").classList.remove("attack-allowed");
 
       document.querySelectorAll(".edit-board").forEach((editButton) => {
@@ -185,7 +186,8 @@ function createGameOverScreen(currentPlayer, nextPlayer, game) {
   resetButton.addEventListener("click", () => game.reset());
   gameOverScreen.appendChild(resetButton);
 
-  document.querySelector(".passing-screen").remove();
+  const passingScreen = document.querySelector(".passing-screen");
+  if (passingScreen) passingScreen.remove();
 
   return gameOverScreen;
 }

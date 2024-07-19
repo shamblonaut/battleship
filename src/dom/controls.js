@@ -16,6 +16,8 @@ export function setupControls(game) {
   const slider = document.querySelector(".slider");
 
   computerOpponentButton.addEventListener("click", () => {
+    if (!slider.classList.contains("slider-right")) return;
+
     slider.classList.remove("slider-right");
     game.changeMode(
       createPlayer("Player", PlayerType.HUMAN, 10),
@@ -23,8 +25,9 @@ export function setupControls(game) {
     );
   });
   friendOpponentButton.addEventListener("click", () => {
-    slider.classList.add("slider-right");
+    if (slider.classList.contains("slider-right")) return;
 
+    slider.classList.add("slider-right");
     game.changeMode(
       createPlayer("Player 1", PlayerType.HUMAN, 10),
       createPlayer("Player 2", PlayerType.HUMAN, 10),

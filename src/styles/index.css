@@ -10,6 +10,12 @@
   --cell-background: #74c7ec;
 }
 
+*::after {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 #root {
   display: flex;
   flex-direction: column;
@@ -75,10 +81,59 @@ header {
   font-weight: 700;
 }
 
-*::after {
-  display: flex;
-  justify-content: center;
+.opponent {
+  margin: 16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.opponent > p {
+  padding: 8px;
+}
+
+.opponent .options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
   align-items: center;
+  padding: 8px;
+  grid-gap: 16px;
+  background-color: var(--board-background);
+  border-radius: 8px;
+  position: relative;
+}
+
+.options p {
+  width: 256px;
+  text-align: center;
+  padding: 8px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  z-index: 2;
+}
+
+.slider:not(.slider-right) ~ .opponent-computer,
+.slider.slider-right ~ .opponent-friend {
+  color: #fff;
+}
+
+.options .slider {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 256px;
+  height: calc(100% - 16px);
+  z-index: 1;
+
+  transition: transform ease-in-out 200ms;
+}
+
+.slider.slider-right {
+  transform: translateX(calc(100% + 16px));
 }
 
 .boards {
@@ -206,10 +261,6 @@ header {
   background-color: #eba0ac;
 }
 
-/* .attack-allowed:not(.passing) .board:not(.active):not(.computer) .cell.empty */
-
-/* (.active ~ :not(.active)) .cell.ship */
-
 .board.editing .cell.ship.moving {
   background-color: #fab387;
 }
@@ -312,69 +363,48 @@ header {
   font-weight: 700;
 }
 
-.opponent {
-  margin: 16px;
-  padding-left: 16px;
-  padding-right: 16px;
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.opponent > p {
-  padding: 8px 0;
-}
-
-.opponent .options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  justify-items: center;
-  align-items: center;
-  padding: 8px;
-  grid-gap: 16px;
-  background-color: var(--board-background);
-  border-radius: 8px;
-  position: relative;
-}
-
-.options p {
-  width: 256px;
-  text-align: center;
-  padding: 8px 0;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  z-index: 2;
-}
-
-.slider:not(.slider-right) ~ .opponent-computer,
-.slider.slider-right ~ .opponent-friend {
-  color: #fff;
-}
-
-.options .slider {
-  position: absolute;
-  left: 8px;
-  top: 8px;
-  width: 256px;
-  height: calc(100% - 16px);
-  z-index: 1;
-
-  transition: transform ease-in-out 200ms;
-}
-
-.slider.slider-right {
-  transform: translateX(calc(100% + 16px));
-}
-
 @media (max-width: 600px) {
   header {
     font-size: 2rem;
-    margin-bottom: 8px;
   }
 
-  .boards:not(.hidden),
-  .controls:not(.hidden),
+  .opponent {
+    order: 1;
+    margin: 8px;
+    padding: 8px;
+    font-size: 1rem;
+  }
+
+  .opponent > p {
+    padding: 2px;
+  }
+
+  .opponent .options {
+    grid-gap: 8px;
+  }
+
+  .options p {
+    width: 128px;
+  }
+
+  .options .slider {
+    width: 128px;
+  }
+
+  .slider.slider-right {
+    transform: translateX(calc(100% + 8px));
+  }
+
+  .controls {
+    margin: 16px;
+    order: 2;
+  }
+
+  .in-progress .controls {
+    order: 4;
+  }
+
+  .boards,
   .info:not(.hidden) {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr 1fr;
@@ -382,12 +412,70 @@ header {
   }
 
   .boards {
-    margin-bottom: 16px;
+    order: 3;
+    margin-top: 4px;
+  }
+
+  .board {
+    margin: 4px;
+    padding: 8px;
+    padding-bottom: 12px;
+  }
+
+  .game-over-screen,
+  .passing-screen {
+    left: 8px;
+    top: 8px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+  }
+
+  .board-header {
+    padding: calc(var(--grid-gap));
+    margin-bottom: 8px;
+  }
+
+  .player-name,
+  .player-name-input {
+    font-size: 1rem;
+  }
+
+  .player-name-input {
+    width: 150px;
+  }
+
+  .board-controls {
+    right: 4px;
+  }
+
+  .board-controls button {
+    padding: 4px;
+  }
+
+  .board-controls img {
+    width: 16px;
+    height: auto;
+  }
+
+  .board.active {
+    transform: translateY(-2px);
   }
 
   .cell {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
+  }
+
+  .attack-allowed .active .cell.empty:hover,
+  .attack-allowed .active .cell.ship:hover {
+    box-shadow: none;
+    transform: none;
+  }
+
+  .attack-allowed .active .cell.empty:active,
+  .attack-allowed .active .cell.ship:active {
+    box-shadow: none;
+    transform: none;
   }
 
   .cell.miss::after {
@@ -404,11 +492,13 @@ header {
     padding-bottom: 12px;
   }
 
-  .info {
+  .info:not(.hidden) {
     position: relative;
+    margin-bottom: 16px;
   }
 
   .info p {
     position: absolute;
+    font-size: 1.25rem;
   }
 }
