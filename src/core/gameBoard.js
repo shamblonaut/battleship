@@ -255,7 +255,7 @@ export function createGameBoard(size) {
 
       if (this.cells[coordinates[1]][coordinates[0]] !== CellState.SHIP) {
         this.cells[coordinates[1]][coordinates[0]] = CellState.MISS;
-        return false;
+        return CellState.MISS;
       }
 
       for (const ship of this.ships) {
@@ -293,7 +293,7 @@ export function createGameBoard(size) {
             this.cells[coordinates[1]][coordinates[0]] = CellState.HIT;
           }
 
-          return true;
+          return this.cells[coordinates[1]][coordinates[0]];
         }
       }
     },

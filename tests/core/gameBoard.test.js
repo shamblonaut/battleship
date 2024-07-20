@@ -154,10 +154,12 @@ describe("GameBoard", () => {
     const newBoard = createGameBoard(10);
     newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);
 
-    expect(newBoard.receiveAttack([2, 4])).toBe(true);
-    expect(newBoard.receiveAttack([2, 5])).toBe(true);
+    expect(newBoard.receiveAttack([2, 2])).toBe(CellState.HIT);
+    expect(newBoard.receiveAttack([2, 3])).toBe(CellState.HIT);
+    expect(newBoard.receiveAttack([2, 5])).toBe(CellState.HIT);
+    expect(newBoard.receiveAttack([2, 4])).toBe(CellState.SUNK);
 
-    expect(newBoard.ships[0].hits).toBe(2);
+    expect(newBoard.ships[0].hits).toBe(4);
   });
 
   it("relays hits to multiple ships", () => {
@@ -166,11 +168,11 @@ describe("GameBoard", () => {
     newBoard.placeShip([3, 3], 3, ShipOrientation.VERTICAL);
 
     // Attack first ship once
-    expect(newBoard.receiveAttack([4, 2])).toBe(true);
+    expect(newBoard.receiveAttack([4, 2])).toBe(CellState.HIT);
 
     // Attack second ship twice
-    expect(newBoard.receiveAttack([3, 4])).toBe(true);
-    expect(newBoard.receiveAttack([3, 5])).toBe(true);
+    expect(newBoard.receiveAttack([3, 4])).toBe(CellState.HIT);
+    expect(newBoard.receiveAttack([3, 5])).toBe(CellState.HIT);
 
     expect(newBoard.ships[0].hits).toBe(1);
     expect(newBoard.ships[1].hits).toBe(2);
@@ -181,11 +183,11 @@ describe("GameBoard", () => {
     newBoard.placeShip([2, 2], 4, ShipOrientation.HORIZONTAL);
     newBoard.placeShip([3, 3], 3, ShipOrientation.HORIZONTAL);
 
-    expect(newBoard.receiveAttack([1, 2])).toBe(false); // Horizontally before first ship
-    expect(newBoard.receiveAttack([6, 2])).toBe(false); // Horizontally after first ship
-    expect(newBoard.receiveAttack([4, 1])).toBe(false); // Vertically before first ship
-    expect(newBoard.receiveAttack([2, 3])).toBe(false); // Vertically after first ship and horizontally before second ship
-    expect(newBoard.receiveAttack([6, 3])).toBe(false); // Horizontally after second ship
+    expect(newBoard.receiveAttack([1, 2])).toBe(CellState.MISS); // Horizontally before first ship
+    expect(newBoard.receiveAttack([6, 2])).toBe(CellState.MISS); // Horizontally after first ship
+    expect(newBoard.receiveAttack([4, 1])).toBe(CellState.MISS); // Vertically before first ship
+    expect(newBoard.receiveAttack([2, 3])).toBe(CellState.MISS); // Vertically after first ship and horizontally before second ship
+    expect(newBoard.receiveAttack([6, 3])).toBe(CellState.MISS); // Horizontally after second ship
 
     expect(newBoard.ships[0].hits).toBe(0);
     expect(newBoard.ships[1].hits).toBe(0);
@@ -205,12 +207,12 @@ describe("GameBoard", () => {
     const newBoard = createGameBoard(10);
     newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);
 
-    expect(newBoard.receiveAttack([2, 4])).toBe(true);
+    expect(newBoard.receiveAttack([2, 4])).toBe(CellState.HIT);
     expect(() => newBoard.receiveAttack([2, 4])).toThrow(
       "Cell has already been attacked",
     );
 
-    expect(newBoard.receiveAttack([9, 9])).toBe(false);
+    expect(newBoard.receiveAttack([9, 9])).toBe(CellState.MISS);
     expect(() => newBoard.receiveAttack([9, 9])).toThrow(
       "Cell has already been attacked",
     );
@@ -243,16 +245,16 @@ describe("GameBoard", () => {
     newBoard.placeShip([2, 2], 4, ShipOrientation.HORIZONTAL);
     newBoard.placeShip([6, 3], 3, ShipOrientation.VERTICAL);
 
-    expect(newBoard.receiveAttack([2, 2])).toBe(true);
-    expect(newBoard.receiveAttack([3, 2])).toBe(true);
-    expect(newBoard.receiveAttack([4, 2])).toBe(true);
-    expect(newBoard.receiveAttack([5, 2])).toBe(true);
+    expect(newBoard.receiveAttack([2, 2])).toBe(CellState.HIT);
+    expect(newBoard.receiveAttack([3, 2])).toBe(CellState.HIT);
+    expect(newBoard.receiveAttack([4, 2])).toBe(CellState.HIT);
+    expect(newBoard.receiveAttack([5, 2])).toBe(CellState.SUNK);
 
     expect(newBoard.isFleetDestroyed()).toBe(false);
 
-    expect(newBoard.receiveAttack([6, 3])).toBe(true);
-    expect(newBoard.receiveAttack([6, 4])).toBe(true);
-    expect(newBoard.receiveAttack([6, 5])).toBe(true);
+    expect(newBoard.receiveAttack([6, 3])).toBe(CellState.HIT);
+    expect(newBoard.receiveAttack([6, 4])).toBe(CellState.HIT);
+    expect(newBoard.receiveAttack([6, 5])).toBe(CellState.SUNK);
 
     expect(newBoard.isFleetDestroyed()).toBe(true);
   });
