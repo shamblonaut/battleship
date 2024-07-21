@@ -1,14 +1,15 @@
+import { CellState } from "../core/gameBoard.js";
 import { PlayerType } from "../core/player.js";
 import { setupGameBoards } from "./boards.js";
 
-const GameMode = Object.freeze({
+export const GameMode = Object.freeze({
   COMPUTER: "computer",
   FRIEND: "friend",
 });
 
-export function setupGame(playerOne, playerTwo) {
+export function setupGame(playerOne, playerTwo, mode) {
   const game = {
-    mode: GameMode.COMPUTER,
+    mode,
 
     players: [playerOne, playerTwo],
     currentPlayerIndex: Math.floor(Math.random() * 2),
@@ -28,9 +29,18 @@ export function setupGame(playerOne, playerTwo) {
 
       document.querySelector(".start").classList.add("hidden");
       document.querySelector(".reset").classList.remove("hidden");
-      document.querySelector(".info").classList.remove("hidden");
-      document.querySelector(".opponent").classList.add("hidden");
+      document.querySelector(".board-info").classList.remove("hidden");
+      document.querySelector(".help-info").classList.add("hidden");
+      document.querySelector(".attack-info").classList.remove("hidden");
       document.querySelector("#root").classList.add("in-progress");
+
+      document.querySelector("#root").classList.remove("vs-computer");
+      document.querySelector("#root").classList.remove("vs-friend");
+      document
+        .querySelector("#root")
+        .classList.add(
+          mode === GameMode.COMPUTER ? "vs-computer" : "vs-friend",
+        );
 
       document.querySelectorAll(".board-controls").forEach((boardControls) => {
         boardControls.classList.add("hidden");
@@ -45,17 +55,11 @@ export function setupGame(playerOne, playerTwo) {
 
       document.querySelector(".start").classList.remove("hidden");
       document.querySelector(".reset").classList.add("hidden");
-      document.querySelector(".info").classList.add("hidden");
-      document.querySelector(".opponent").classList.remove("hidden");
+      document.querySelector(".board-info").classList.add("hidden");
+      document.querySelector(".help-info").classList.remove("hidden");
+      document.querySelector(".attack-info").classList.add("hidden");
       document.querySelector("#root").classList.remove("in-progress");
       document.querySelector("#root").classList.remove("attack-allowed");
-
-      document.querySelectorAll(".edit-board").forEach((editButton) => {
-        editButton.classList.remove("hidden");
-      });
-      document.querySelectorAll(".active").forEach((activeBoard) => {
-        activeBoard.classList.remove("active");
-      });
 
       this.isInProgress = false;
       this.isGameOver = true;
@@ -79,21 +83,6 @@ export function setupGame(playerOne, playerTwo) {
       );
     },
 
-    changeMode: function (playerOne, playerTwo) {
-      this.mode =
-        this.mode === GameMode.COMPUTER ? GameMode.FRIEND : GameMode.COMPUTER;
-      this.players = [playerOne, playerTwo];
-      this.currentPlayerIndex = Math.floor(Math.random() * 2);
-
-      this.isInProgress = false;
-      this.isGameOver = false;
-      this.isPlayerWaiting = false;
-
-      this.boards = setupGameBoards(this, playerOne, playerTwo);
-
-      this.reset();
-    },
-
     play: async function () {
       let currentPlayer = this.players[this.currentPlayerIndex];
       let nextPlayerIndex = (this.currentPlayerIndex + 1) % 2;
@@ -107,7 +96,7 @@ export function setupGame(playerOne, playerTwo) {
             createGameOverScreen(currentPlayer, nextPlayer, this),
           );
 
-          document.querySelector(".info").classList.add("hidden");
+          document.querySelector(".board-info").classList.add("hidden");
         }
 
         if (this.isPlayerWaiting) {
@@ -138,7 +127,9 @@ export function setupGame(playerOne, playerTwo) {
         this.boards[nextPlayerIndex].active = true;
 
         if (currentPlayer.type === PlayerType.COMPUTER && !this.isGameOver) {
-          await this.boards[nextPlayerIndex].computerAttack();
+          await this.boards[nextPlayerIndex].computerAttack(
+            this.currentPlayerIndex,
+          );
         } else {
           this.isPlayerWaiting = true;
 
@@ -156,6 +147,24 @@ export function setupGame(playerOne, playerTwo) {
         }
 
         this.currentPlayerIndex = nextPlayerIndex;
+      }
+    },
+
+    updateAttackInfo: function (attackType, ship, attackerIndex) {
+      const attackInfo = document.querySelector(".attack-info");
+      const attacker = this.players[attackerIndex].name;
+      const receiver = this.players[(attackerIndex + 1) % 2].name;
+
+      switch (attackType) {
+        case CellState.MISS:
+          attackInfo.textContent = `${attacker} misses their shot`;
+          break;
+        case CellState.HIT:
+          attackInfo.textContent = `${attacker} hits one of ${receiver}'s ships`;
+          break;
+        case CellState.SUNK:
+          attackInfo.textContent = `${attacker} sinks ${receiver}'s ${ship.type}`;
+          break;
       }
     },
   };
@@ -179,6 +188,9 @@ function createGameOverScreen(currentPlayer, nextPlayer, game) {
   }
 
   gameOverScreen.innerHTML = `<p>${gameOverMessage}</p>`;
+
+  const outerResetButton = document.querySelector(".reset");
+  if (outerResetButton) outerResetButton.classList.add("hidden");
 
   const resetButton = document.createElement("button");
   resetButton.classList.add("reset");

@@ -27,46 +27,62 @@ export function createGameBoard(size) {
       this.ships = [];
     },
 
-    placeShip: function (coordinates, length, orientation) {
+    placeShip: function (ship) {
       if (
-        coordinates[0] < 0 ||
-        coordinates[1] < 0 ||
-        coordinates[0] >= size ||
-        coordinates[1] >= size
+        ship.coordinates[0] < 0 ||
+        ship.coordinates[1] < 0 ||
+        ship.coordinates[0] >= size ||
+        ship.coordinates[1] >= size
       ) {
         throw new Error("Cannot place ship outside the board");
       } else if (
-        (orientation === ShipOrientation.HORIZONTAL &&
-          coordinates[0] + length - 1 >= size) ||
-        (orientation === ShipOrientation.VERTICAL &&
-          coordinates[1] + length - 1 >= size)
+        (ship.orientation === ShipOrientation.HORIZONTAL &&
+          ship.coordinates[0] + ship.length - 1 >= size) ||
+        (ship.orientation === ShipOrientation.VERTICAL &&
+          ship.coordinates[1] + ship.length - 1 >= size)
       ) {
         return false;
       }
 
-      if (orientation === ShipOrientation.HORIZONTAL) {
-        for (let i = coordinates[0]; i <= coordinates[0] + length - 1; i++) {
-          if (this.cells[coordinates[1]][i] !== CellState.EMPTY) {
+      if (ship.orientation === ShipOrientation.HORIZONTAL) {
+        for (
+          let i = ship.coordinates[0];
+          i <= ship.coordinates[0] + ship.length - 1;
+          i++
+        ) {
+          if (this.cells[ship.coordinates[1]][i] !== CellState.EMPTY) {
             return false;
           }
         }
-      } else if (orientation === ShipOrientation.VERTICAL) {
-        for (let i = coordinates[1]; i <= coordinates[1] + length - 1; i++) {
-          if (this.cells[i][coordinates[0]] !== CellState.EMPTY) {
+      } else if (ship.orientation === ShipOrientation.VERTICAL) {
+        for (
+          let i = ship.coordinates[1];
+          i <= ship.coordinates[1] + ship.length - 1;
+          i++
+        ) {
+          if (this.cells[i][ship.coordinates[0]] !== CellState.EMPTY) {
             return false;
           }
         }
       }
 
-      this.ships.push(createShip(length, coordinates, orientation));
+      this.ships.push(ship);
 
-      if (orientation === ShipOrientation.HORIZONTAL) {
-        for (let i = coordinates[0]; i <= coordinates[0] + length - 1; i++) {
-          this.cells[coordinates[1]][i] = CellState.SHIP;
+      if (ship.orientation === ShipOrientation.HORIZONTAL) {
+        for (
+          let i = ship.coordinates[0];
+          i <= ship.coordinates[0] + ship.length - 1;
+          i++
+        ) {
+          this.cells[ship.coordinates[1]][i] = CellState.SHIP;
         }
-      } else if (orientation === ShipOrientation.VERTICAL) {
-        for (let i = coordinates[1]; i <= coordinates[1] + length - 1; i++) {
-          this.cells[i][coordinates[0]] = CellState.SHIP;
+      } else if (ship.orientation === ShipOrientation.VERTICAL) {
+        for (
+          let i = ship.coordinates[1];
+          i <= ship.coordinates[1] + ship.length - 1;
+          i++
+        ) {
+          this.cells[i][ship.coordinates[0]] = CellState.SHIP;
         }
       }
 
@@ -97,7 +113,9 @@ export function createGameBoard(size) {
         }
       }
 
-      if (!this.placeShip(coordinates, ship.length, ship.orientation)) {
+      if (
+        !this.placeShip(createShip(ship.type, coordinates, ship.orientation))
+      ) {
         if (ship.orientation === ShipOrientation.HORIZONTAL) {
           for (
             let i = ship.coordinates[0];
@@ -255,7 +273,7 @@ export function createGameBoard(size) {
 
       if (this.cells[coordinates[1]][coordinates[0]] !== CellState.SHIP) {
         this.cells[coordinates[1]][coordinates[0]] = CellState.MISS;
-        return CellState.MISS;
+        return { result: CellState.MISS, ship: undefined };
       }
 
       for (const ship of this.ships) {
@@ -293,7 +311,7 @@ export function createGameBoard(size) {
             this.cells[coordinates[1]][coordinates[0]] = CellState.HIT;
           }
 
-          return this.cells[coordinates[1]][coordinates[0]];
+          return { result: this.cells[coordinates[1]][coordinates[0]], ship };
         }
       }
     },

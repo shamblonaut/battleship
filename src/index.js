@@ -1,7 +1,7 @@
-import { createPlayer, PlayerType } from "./core/player.js";
-import { setupControls } from "./dom/controls.js";
-import { setupGame } from "./dom/game.js";
+import { createHomePage } from "./dom/pages/home.js";
 
+import backSvg from "../assets/chevron-left.svg";
+import logo from "../assets/favicon.ico";
 import "./styles/index.css";
 
 console.log("Get Ready for Battle!");
@@ -9,33 +9,29 @@ console.log("Get Ready for Battle!");
 const root = document.getElementById("root");
 root.innerHTML = `
   <header>
-    <h1>Battleship</h1>
+    <button class="back-button"></button>
+    <img class="logo" alt="Logo" /><h1>BATTLESHIP</h1>
   </header>
-  <div class="opponent">
-    <p>Opponent: </p>
-    <div class="options">
-      <p class="opponent-computer active-mode">Computer</p>
-      <p class="opponent-friend">Friend</p>
-    </div>
-  </div>
-  <a class="help-link">How to Play</a>
-  <div class="controls">
-    <button class="start">Start Game</button>
-    <button class="reset hidden">Reset Game</button>
-  </div>
-  <div class="boards"></div>
-  <div class="info hidden">
-    <p class="board-one-info"></p>
-    <p class="board-two-info"></p>
-  </div>
 `;
 
-const game = setupGame(
-  createPlayer("Player", PlayerType.HUMAN, 10),
-  createPlayer("Computer", PlayerType.COMPUTER, 10),
-);
+root.querySelector(".logo").src = logo;
 
-document
-  .querySelector(".boards")
-  .append(game.boards[0].component, game.boards[1].component);
-setupControls(game);
+root.appendChild(createHomePage());
+
+const backButton = root.querySelector(".back-button");
+const backIcon = new Image();
+backIcon.src = backSvg;
+backButton.appendChild(backIcon);
+backButton.addEventListener("click", () => {
+  const currentPage = root.querySelector(".page");
+  const newPage = createHomePage();
+
+  if (newPage.classList[0] == currentPage.classList[0]) {
+    return;
+  }
+
+  root.className = "";
+
+  root.appendChild(newPage);
+  currentPage.remove();
+});

@@ -1,6 +1,11 @@
 import { CellState } from "../core/gameBoard.js";
 import { PlayerType } from "../core/player.js";
-import { ShipOrientation } from "../core/ship.js";
+import {
+  createShip,
+  getShipLength,
+  ShipOrientation,
+  ShipType,
+} from "../core/ship.js";
 
 import refreshSvg from "../../assets/refresh-ccw.svg";
 import editSvg from "../../assets/edit.svg";
@@ -12,6 +17,7 @@ export function setupGameBoards(game, playerOne, playerTwo) {
     playerOne,
     playerTwo.type !== PlayerType.COMPUTER,
     playerOne.type === PlayerType.HUMAN,
+    game,
   );
   boardOne.randomizeFormation();
 
@@ -29,6 +35,7 @@ export function setupGameBoards(game, playerOne, playerTwo) {
     playerTwo,
     playerOne.type !== PlayerType.COMPUTER,
     playerTwo.type === PlayerType.HUMAN,
+    game,
   );
   boardTwo.randomizeFormation();
 
@@ -37,7 +44,7 @@ export function setupGameBoards(game, playerOne, playerTwo) {
     playerTwo.type === PlayerType.HUMAN ? "human" : "computer",
   );
 
-  for (const DOMBoard of [boardOne, boardTwo]) {
+  [boardOne, boardTwo].forEach((DOMBoard, boardIndex) => {
     Array.from(DOMBoard.component.children[1].children).forEach((row, i) => {
       Array.from(row.children).forEach((cell, j) => {
         cell.addEventListener("click", () => {
@@ -55,7 +62,13 @@ export function setupGameBoards(game, playerOne, playerTwo) {
             !game.isGameOver &&
             game.isPlayerWaiting
           ) {
-            if (DOMBoard.receiveAttack([j, i])) {
+            const attack = DOMBoard.receiveAttack([j, i]);
+            if (attack) {
+              game.updateAttackInfo(
+                attack.result,
+                attack.ship,
+                (boardIndex + 1) % 2,
+              );
               game.isPlayerWaiting = false;
             }
           }
@@ -88,7 +101,7 @@ export function setupGameBoards(game, playerOne, playerTwo) {
         });
       });
     });
-  }
+  });
 
   document.addEventListener("keydown", (event) => {
     if (boardOne.editing) boardOne.moveShip(event.key);
@@ -98,7 +111,7 @@ export function setupGameBoards(game, playerOne, playerTwo) {
   return [boardOne, boardTwo];
 }
 
-export function createBoardComponent(board, player, attackable, mutable) {
+export function createBoardComponent(board, player, attackable, mutable, game) {
   const boardComponent = document.createElement("div");
   boardComponent.classList.add("board");
 
@@ -198,12 +211,12 @@ export function createBoardComponent(board, player, attackable, mutable) {
     },
 
     randomizeFormation: function () {
-      const ships = [5, 4, 3, 3, 2];
-
       this.clear();
       this.board.reset();
 
-      for (const ship of ships) {
+      for (const type of Object.keys(ShipType)) {
+        const shipLength = getShipLength(ShipType[type]);
+
         let placed = false;
         while (!placed) {
           const orientation =
@@ -213,14 +226,18 @@ export function createBoardComponent(board, player, attackable, mutable) {
 
           const x = Math.floor(
             Math.random() *
-              (10 - (orientation === ShipOrientation.HORIZONTAL ? ship : 0)),
+              (10 -
+                (orientation === ShipOrientation.HORIZONTAL ? shipLength : 0)),
           );
           const y = Math.floor(
             Math.random() *
-              (10 - (orientation === ShipOrientation.VERTICAL ? ship : 0)),
+              (10 -
+                (orientation === ShipOrientation.VERTICAL ? shipLength : 0)),
           );
 
-          placed = this.board.placeShip([x, y], ship, orientation);
+          placed = this.board.placeShip(
+            createShip(ShipType[type], [x, y], orientation),
+          );
         }
       }
 
@@ -316,8 +333,6 @@ export function createBoardComponent(board, player, attackable, mutable) {
 
       const movedShip = this.board.ships[movingShipIndex];
       this.toggleShipMotion(movedShip.coordinates);
-
-      console.log("doing something?");
     },
 
     receiveAttack: function (coordinates) {
@@ -326,15 +341,15 @@ export function createBoardComponent(board, player, attackable, mutable) {
         return false;
       }
 
-      board.receiveAttack(coordinates);
+      const result = board.receiveAttack(coordinates);
       this.render();
 
       this.active = false;
 
-      return true;
+      return result;
     },
 
-    computerAttack: async function () {
+    computerAttack: async function (attackerIndex) {
       let x, y;
 
       let valid = false;
@@ -353,8 +368,8 @@ export function createBoardComponent(board, player, attackable, mutable) {
 
       await new Promise((r) => setTimeout(r, 500));
 
-      this.board.receiveAttack([x, y]);
-      this.render();
+      const attack = this.receiveAttack([x, y]);
+      game.updateAttackInfo(attack.result, attack.ship, attackerIndex);
     },
   };
 

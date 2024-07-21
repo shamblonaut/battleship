@@ -1,5 +1,5 @@
 import { CellState, createGameBoard } from "../../src/core/gameBoard";
-import { createShip, ShipOrientation } from "../../src/core/ship";
+import { createShip, ShipOrientation, ShipType } from "../../src/core/ship";
 
 describe("GameBoard", () => {
   it("creates a new square board with given size", () => {
@@ -26,8 +26,12 @@ describe("GameBoard", () => {
   it("resets the board properly on command", () => {
     const newBoard = createGameBoard(10);
 
-    newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);
-    newBoard.placeShip([3, 3], 4, ShipOrientation.HORIZONTAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.VERTICAL),
+    );
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [3, 3], ShipOrientation.HORIZONTAL),
+    );
 
     newBoard.reset();
 
@@ -37,11 +41,19 @@ describe("GameBoard", () => {
     });
   });
 
-  it("places a ship at given coordinates and orientation", () => {
+  it("places the given ship at given coordinates and orientation", () => {
     const newBoard = createGameBoard(10);
-    const newShip = createShip(4, [2, 2], ShipOrientation.VERTICAL);
+    const newShip = createShip(
+      ShipType.BATTLESHIP,
+      [2, 2],
+      ShipOrientation.VERTICAL,
+    );
 
-    expect(newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL)).toBe(true);
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.VERTICAL),
+      ),
+    ).toBe(true);
 
     expect(JSON.stringify(newBoard.ships[0])).toBe(JSON.stringify(newShip));
   });
@@ -49,49 +61,87 @@ describe("GameBoard", () => {
   it("does not allow placement of ships over other ships", () => {
     const newBoard = createGameBoard(10);
 
-    expect(newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL)).toBe(true);
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.VERTICAL),
+      ),
+    ).toBe(true);
 
-    expect(newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL)).toBe(false);
-    expect(newBoard.placeShip([2, 5], 1, ShipOrientation.VERTICAL)).toBe(false);
-    expect(newBoard.placeShip([0, 4], 4, ShipOrientation.HORIZONTAL)).toBe(
-      false,
-    );
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.VERTICAL),
+      ),
+    ).toBe(false);
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.PATROL, [2, 5], ShipOrientation.VERTICAL),
+      ),
+    ).toBe(false);
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [0, 4], ShipOrientation.HORIZONTAL),
+      ),
+    ).toBe(false);
 
-    expect(newBoard.placeShip([5, 5], 4, ShipOrientation.HORIZONTAL)).toBe(
-      true,
-    );
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [5, 5], ShipOrientation.HORIZONTAL),
+      ),
+    ).toBe(true);
 
-    expect(newBoard.placeShip([5, 5], 4, ShipOrientation.HORIZONTAL)).toBe(
-      false,
-    );
-    expect(newBoard.placeShip([7, 5], 1, ShipOrientation.HORIZONTAL)).toBe(
-      false,
-    );
-    expect(newBoard.placeShip([7, 3], 4, ShipOrientation.VERTICAL)).toBe(false);
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [5, 5], ShipOrientation.HORIZONTAL),
+      ),
+    ).toBe(false);
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.PATROL, [7, 5], ShipOrientation.HORIZONTAL),
+      ),
+    ).toBe(false);
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [7, 3], ShipOrientation.VERTICAL),
+      ),
+    ).toBe(false);
   });
 
   it("does not allow placement of ships outside the board size", () => {
     const newBoard = createGameBoard(10);
     expect(() =>
-      newBoard.placeShip([5, -1], 4, ShipOrientation.HORIZONTAL),
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [5, -1], ShipOrientation.HORIZONTAL),
+      ),
     ).toThrow("Cannot place ship outside the board");
     expect(() =>
-      newBoard.placeShip([12, 9], 4, ShipOrientation.VERTICAL),
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [12, 9], ShipOrientation.VERTICAL),
+      ),
     ).toThrow("Cannot place ship outside the board");
   });
 
   it("does not allow placement of ship such that it extends beyond the board", () => {
     const newBoard = createGameBoard(10);
-    expect(newBoard.placeShip([8, 6], 4, ShipOrientation.HORIZONTAL)).toBe(
-      false,
-    );
-    expect(newBoard.placeShip([6, 8], 4, ShipOrientation.VERTICAL)).toBe(false);
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [8, 6], ShipOrientation.HORIZONTAL),
+      ),
+    ).toBe(false);
+    expect(
+      newBoard.placeShip(
+        createShip(ShipType.BATTLESHIP, [6, 8], ShipOrientation.VERTICAL),
+      ),
+    ).toBe(false);
   });
 
   it("gives index of a ship at the given coordinates", () => {
     const newBoard = createGameBoard(10);
-    newBoard.placeShip([2, 2], 5, ShipOrientation.VERTICAL);
-    newBoard.placeShip([4, 4], 4, ShipOrientation.HORIZONTAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.VERTICAL),
+    );
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [4, 4], ShipOrientation.HORIZONTAL),
+    );
 
     expect(newBoard.getShipIndex([2, 2])).toBe(0);
     expect(newBoard.getShipIndex([2, 5])).toBe(0);
@@ -106,9 +156,15 @@ describe("GameBoard", () => {
   it("allows ships to be moved from their original position", () => {
     const newBoard = createGameBoard(10);
 
-    newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);
-    newBoard.placeShip([3, 3], 4, ShipOrientation.VERTICAL);
-    newBoard.placeShip([6, 6], 4, ShipOrientation.HORIZONTAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.VERTICAL),
+    );
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [3, 3], ShipOrientation.VERTICAL),
+    );
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [6, 6], ShipOrientation.HORIZONTAL),
+    );
 
     expect(newBoard.moveShip(1, [2, 3])).toBe(false);
     expect(newBoard.moveShip(1, [4, 4])).toBe(true);
@@ -126,11 +182,19 @@ describe("GameBoard", () => {
   it("allows ships to be rotated around their original position", () => {
     const newBoard = createGameBoard(10);
 
-    newBoard.placeShip([1, 3], 4, ShipOrientation.VERTICAL);
-    newBoard.placeShip([3, 3], 4, ShipOrientation.HORIZONTAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [1, 3], ShipOrientation.VERTICAL),
+    );
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [3, 3], ShipOrientation.HORIZONTAL),
+    );
 
-    newBoard.placeShip([1, 8], 3, ShipOrientation.HORIZONTAL);
-    newBoard.placeShip([8, 1], 3, ShipOrientation.VERTICAL);
+    newBoard.placeShip(
+      createShip(ShipType.DESTROYER, [1, 8], ShipOrientation.HORIZONTAL),
+    );
+    newBoard.placeShip(
+      createShip(ShipType.DESTROYER, [8, 1], ShipOrientation.VERTICAL),
+    );
 
     expect(newBoard.rotateShip(0)).toBe(false);
     expect(newBoard.ships[0].orientation).toBe(ShipOrientation.VERTICAL);
@@ -152,27 +216,92 @@ describe("GameBoard", () => {
 
   it("relays that a ship has been hit", () => {
     const newBoard = createGameBoard(10);
-    newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.VERTICAL),
+    );
 
-    expect(newBoard.receiveAttack([2, 2])).toBe(CellState.HIT);
-    expect(newBoard.receiveAttack([2, 3])).toBe(CellState.HIT);
-    expect(newBoard.receiveAttack([2, 5])).toBe(CellState.HIT);
-    expect(newBoard.receiveAttack([2, 4])).toBe(CellState.SUNK);
+    const ship = createShip(
+      ShipType.BATTLESHIP,
+      [2, 2],
+      ShipOrientation.VERTICAL,
+    );
+
+    ship.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([2, 2]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship,
+      }),
+    );
+    ship.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([2, 3]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship,
+      }),
+    );
+    ship.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([2, 5]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship,
+      }),
+    );
+    ship.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([2, 4]))).toBe(
+      JSON.stringify({
+        result: CellState.SUNK,
+        ship,
+      }),
+    );
 
     expect(newBoard.ships[0].hits).toBe(4);
   });
 
   it("relays hits to multiple ships", () => {
     const newBoard = createGameBoard(10);
-    newBoard.placeShip([2, 2], 4, ShipOrientation.HORIZONTAL);
-    newBoard.placeShip([3, 3], 3, ShipOrientation.VERTICAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.HORIZONTAL),
+    );
+    newBoard.placeShip(
+      createShip(ShipType.DESTROYER, [3, 3], ShipOrientation.VERTICAL),
+    );
+
+    const shipOne = createShip(
+      ShipType.BATTLESHIP,
+      [2, 2],
+      ShipOrientation.HORIZONTAL,
+    );
+    const shipTwo = createShip(
+      ShipType.DESTROYER,
+      [3, 3],
+      ShipOrientation.VERTICAL,
+    );
 
     // Attack first ship once
-    expect(newBoard.receiveAttack([4, 2])).toBe(CellState.HIT);
+    shipOne.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([4, 2]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship: shipOne,
+      }),
+    );
 
     // Attack second ship twice
-    expect(newBoard.receiveAttack([3, 4])).toBe(CellState.HIT);
-    expect(newBoard.receiveAttack([3, 5])).toBe(CellState.HIT);
+    shipTwo.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([3, 4]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship: shipTwo,
+      }),
+    );
+    shipTwo.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([3, 5]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship: shipTwo,
+      }),
+    );
 
     expect(newBoard.ships[0].hits).toBe(1);
     expect(newBoard.ships[1].hits).toBe(2);
@@ -180,14 +309,43 @@ describe("GameBoard", () => {
 
   it("does not affect ships if the attack misses", () => {
     const newBoard = createGameBoard(10);
-    newBoard.placeShip([2, 2], 4, ShipOrientation.HORIZONTAL);
-    newBoard.placeShip([3, 3], 3, ShipOrientation.HORIZONTAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.HORIZONTAL),
+    );
+    newBoard.placeShip(
+      createShip(ShipType.DESTROYER, [3, 3], ShipOrientation.HORIZONTAL),
+    );
 
-    expect(newBoard.receiveAttack([1, 2])).toBe(CellState.MISS); // Horizontally before first ship
-    expect(newBoard.receiveAttack([6, 2])).toBe(CellState.MISS); // Horizontally after first ship
-    expect(newBoard.receiveAttack([4, 1])).toBe(CellState.MISS); // Vertically before first ship
-    expect(newBoard.receiveAttack([2, 3])).toBe(CellState.MISS); // Vertically after first ship and horizontally before second ship
-    expect(newBoard.receiveAttack([6, 3])).toBe(CellState.MISS); // Horizontally after second ship
+    expect(JSON.stringify(newBoard.receiveAttack([1, 2]))).toBe(
+      JSON.stringify({
+        result: CellState.MISS,
+        ship: undefined,
+      }),
+    ); // Horizontally before first ship
+    expect(JSON.stringify(newBoard.receiveAttack([6, 2]))).toBe(
+      JSON.stringify({
+        result: CellState.MISS,
+        ship: undefined,
+      }),
+    ); // Horizontally after first ship
+    expect(JSON.stringify(newBoard.receiveAttack([4, 1]))).toBe(
+      JSON.stringify({
+        result: CellState.MISS,
+        ship: undefined,
+      }),
+    ); // Vertically before first ship
+    expect(JSON.stringify(newBoard.receiveAttack([2, 3]))).toBe(
+      JSON.stringify({
+        result: CellState.MISS,
+        ship: undefined,
+      }),
+    ); // Vertically after first ship and horizontally before second ship
+    expect(JSON.stringify(newBoard.receiveAttack([6, 3]))).toBe(
+      JSON.stringify({
+        result: CellState.MISS,
+        ship: undefined,
+      }),
+    ); // Horizontally after second ship
 
     expect(newBoard.ships[0].hits).toBe(0);
     expect(newBoard.ships[1].hits).toBe(0);
@@ -205,14 +363,33 @@ describe("GameBoard", () => {
 
   it("does not receive attacks on an already attacked cell", () => {
     const newBoard = createGameBoard(10);
-    newBoard.placeShip([2, 2], 4, ShipOrientation.VERTICAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.VERTICAL),
+    );
 
-    expect(newBoard.receiveAttack([2, 4])).toBe(CellState.HIT);
+    const ship = createShip(
+      ShipType.BATTLESHIP,
+      [2, 2],
+      ShipOrientation.VERTICAL,
+    );
+
+    ship.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([2, 4]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship,
+      }),
+    );
     expect(() => newBoard.receiveAttack([2, 4])).toThrow(
       "Cell has already been attacked",
     );
 
-    expect(newBoard.receiveAttack([9, 9])).toBe(CellState.MISS);
+    expect(JSON.stringify(newBoard.receiveAttack([9, 9]))).toBe(
+      JSON.stringify({
+        result: CellState.MISS,
+        ship: undefined,
+      }),
+    );
     expect(() => newBoard.receiveAttack([9, 9])).toThrow(
       "Cell has already been attacked",
     );
@@ -220,8 +397,12 @@ describe("GameBoard", () => {
 
   it("keeps track of missed attacks", () => {
     const newBoard = createGameBoard(10);
-    newBoard.placeShip([2, 2], 4, ShipOrientation.HORIZONTAL);
-    newBoard.placeShip([3, 3], 3, ShipOrientation.VERTICAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.HORIZONTAL),
+    );
+    newBoard.placeShip(
+      createShip(ShipType.DESTROYER, [3, 3], ShipOrientation.VERTICAL),
+    );
 
     for (let i = 0; i < newBoard.size; i++) {
       for (let j = 0; j < newBoard.size; j++) {
@@ -242,26 +423,85 @@ describe("GameBoard", () => {
 
   it("keeps track whether all ships has been sunk", () => {
     const newBoard = createGameBoard(10);
-    newBoard.placeShip([2, 2], 4, ShipOrientation.HORIZONTAL);
-    newBoard.placeShip([6, 3], 3, ShipOrientation.VERTICAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.HORIZONTAL),
+    );
+    newBoard.placeShip(
+      createShip(ShipType.DESTROYER, [6, 3], ShipOrientation.VERTICAL),
+    );
 
-    expect(newBoard.receiveAttack([2, 2])).toBe(CellState.HIT);
-    expect(newBoard.receiveAttack([3, 2])).toBe(CellState.HIT);
-    expect(newBoard.receiveAttack([4, 2])).toBe(CellState.HIT);
-    expect(newBoard.receiveAttack([5, 2])).toBe(CellState.SUNK);
+    const shipOne = createShip(
+      ShipType.BATTLESHIP,
+      [2, 2],
+      ShipOrientation.HORIZONTAL,
+    );
+    const shipTwo = createShip(
+      ShipType.DESTROYER,
+      [6, 3],
+      ShipOrientation.VERTICAL,
+    );
+
+    shipOne.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([2, 2]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship: shipOne,
+      }),
+    );
+    shipOne.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([3, 2]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship: shipOne,
+      }),
+    );
+    shipOne.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([4, 2]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship: shipOne,
+      }),
+    );
+    shipOne.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([5, 2]))).toBe(
+      JSON.stringify({
+        result: CellState.SUNK,
+        ship: shipOne,
+      }),
+    );
 
     expect(newBoard.isFleetDestroyed()).toBe(false);
 
-    expect(newBoard.receiveAttack([6, 3])).toBe(CellState.HIT);
-    expect(newBoard.receiveAttack([6, 4])).toBe(CellState.HIT);
-    expect(newBoard.receiveAttack([6, 5])).toBe(CellState.SUNK);
+    shipTwo.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([6, 3]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship: shipTwo,
+      }),
+    );
+    shipTwo.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([6, 4]))).toBe(
+      JSON.stringify({
+        result: CellState.HIT,
+        ship: shipTwo,
+      }),
+    );
+    shipTwo.hit();
+    expect(JSON.stringify(newBoard.receiveAttack([6, 5]))).toBe(
+      JSON.stringify({
+        result: CellState.SUNK,
+        ship: shipTwo,
+      }),
+    );
 
     expect(newBoard.isFleetDestroyed()).toBe(true);
   });
 
   it("sets corresponding cells to be sunk after a ship is sunk", () => {
     const newBoard = createGameBoard(10);
-    newBoard.placeShip([2, 2], 4, ShipOrientation.HORIZONTAL);
+    newBoard.placeShip(
+      createShip(ShipType.BATTLESHIP, [2, 2], ShipOrientation.HORIZONTAL),
+    );
 
     newBoard.receiveAttack([2, 2]);
     newBoard.receiveAttack([3, 2]);
