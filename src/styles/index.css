@@ -4,8 +4,8 @@
   --board-border-radius: 8px;
   --board-background: #89dceb;
 
-  --cell-size: 4vmin;
-  --grid-gap: 0.4vmin;
+  --cell-size: 4vh;
+  --grid-gap: 0.4vh;
   --cell-border-radius: 4px;
   --cell-background: #74c7ec;
 }
@@ -350,6 +350,7 @@ td:last-child {
   display: grid;
   grid-auto-flow: row;
   grid-gap: var(--grid-gap);
+  position: relative;
 }
 
 .row {
@@ -368,6 +369,8 @@ td:last-child {
 
   background-color: var(--cell-background);
   color: #4c4f69;
+  position: relative;
+  z-index: 1;
 }
 
 .cell.empty,
@@ -375,20 +378,26 @@ td:last-child {
   background-color: var(--cell-background);
 }
 
+.board.editing .cell.ship.moving {
+  background-color: #eba0ac;
+  opacity: 0.5;
+  /* background-color: #fab387; */
+}
+
 .board.only-human .cell.empty,
 .human.editing .cell.empty,
 .attack-allowed:not(.passing) .board:not(.active) .cell.empty {
-  background-color: var(--board-background);
+  opacity: 0;
+}
+
+.human.editing .cell.ship:not(.moving) {
+  background-color: var(--cell-background);
+  opacity: 0.5;
 }
 
 .human.only-human .cell.ship,
-.human.editing .cell.ship:not(.moving),
-.attack-allowed:not(.passing) .board:not(.active) .cell.ship {
-  background-color: #eba0ac;
-}
-
-.board.editing .cell.ship.moving {
-  background-color: #fab387;
+.in-progress .attack-allowed:not(.passing) .board:not(.active) .cell.ship {
+  opacity: 0;
 }
 
 .attack-allowed .active .cell.empty:hover,
@@ -427,6 +436,29 @@ td:last-child {
   background-color: #f38ba8;
 }
 
+.board-ships {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+.in-progress .board-ships {
+  pointer-events: none;
+}
+
+.in-progress .board-ships img {
+  opacity: 0.75;
+}
+
+.board-ships img {
+  position: absolute;
+  width: calc((var(--cell-size) * 5) + (var(--grid-gap) * 4));
+  height: auto;
+}
+
 .game-over-screen,
 .passing-screen {
   position: absolute;
@@ -445,6 +477,7 @@ td:last-child {
   align-items: center;
   font-size: 2rem;
   font-weight: 700;
+  z-index: 4;
 }
 
 .game-over-screen button,
@@ -499,7 +532,7 @@ td:last-child {
 
 @media (max-width: 600px) {
   :root {
-    --cell-size: 5vw;
+    --cell-size: 4vw;
   }
 
   .info {

@@ -11,6 +11,12 @@ import refreshSvg from "../../assets/refresh-ccw.svg";
 import editSvg from "../../assets/edit.svg";
 import saveSvg from "../../assets/save.svg";
 
+import carrierSvg from "../../assets/carrier.svg";
+import battleshipSvg from "../../assets/battleship.svg";
+import destroyerSvg from "../../assets/destroyer.svg";
+import submarineSvg from "../../assets/submarine.svg";
+import patrolSvg from "../../assets/patrol.svg";
+
 export function setupGameBoards(game, playerOne, playerTwo) {
   const boardOne = createBoardComponent(
     playerOne.board,
@@ -27,6 +33,7 @@ export function setupGameBoards(game, playerOne, playerTwo) {
   );
   if (playerTwo.type === PlayerType.COMPUTER) {
     boardOne.component.classList.add("only-human");
+    boardOne.renderShips();
   }
   boardOne.component.addEventListener("click", () => boardOne.clear(), true);
 
@@ -54,7 +61,7 @@ export function setupGameBoards(game, playerOne, playerTwo) {
             cell.classList.contains("ship") &&
             !game.isInProgress
           ) {
-            DOMBoard.toggleShipMotion([j, i]);
+            // DOMBoard.toggleShipMotion([j, i]);
           } else if (
             DOMBoard.isAttackable() &&
             DOMBoard.active &&
@@ -84,20 +91,20 @@ export function setupGameBoards(game, playerOne, playerTwo) {
             return;
           }
 
-          const shipIndex = DOMBoard.board.getShipIndex([j, i]);
-          const ship = DOMBoard.board.ships[shipIndex];
-
-          if (!cell.classList.contains("moving")) {
-            DOMBoard.toggleShipMotion(ship.coordinates);
-          }
-
-          if (DOMBoard.board.rotateShip(shipIndex)) {
-            DOMBoard.clear();
-            DOMBoard.toggleShipMotion(ship.coordinates);
-            DOMBoard.render();
-          }
-
-          event.preventDefault();
+          // const shipIndex = DOMBoard.board.getShipIndex([j, i]);
+          // const ship = DOMBoard.board.ships[shipIndex];
+          //
+          // if (!cell.classList.contains("moving")) {
+          //   DOMBoard.toggleShipMotion(ship.coordinates);
+          // }
+          //
+          // if (DOMBoard.board.rotateShip(shipIndex)) {
+          //   DOMBoard.clear();
+          //   DOMBoard.toggleShipMotion(ship.coordinates);
+          //   DOMBoard.render();
+          // }
+          //
+          // event.preventDefault();
         });
       });
     });
@@ -175,6 +182,10 @@ export function createBoardComponent(board, player, attackable, mutable, game) {
     boardCells.appendChild(rowComponent);
   }
 
+  const shipsContainer = document.createElement("div");
+  shipsContainer.classList.add("board-ships");
+  boardCells.appendChild(shipsContainer);
+
   const DOMBoard = {
     component: boardComponent,
     board: board,
@@ -200,6 +211,8 @@ export function createBoardComponent(board, player, attackable, mutable, game) {
 
     render: function () {
       Array.from(this.component.children[1].children).forEach((row, i) => {
+        if (row.className === "board-ships") return;
+
         Array.from(row.children).forEach((cell, j) => {
           const isMoving = cell.classList.contains("moving");
 
@@ -207,6 +220,124 @@ export function createBoardComponent(board, player, attackable, mutable, game) {
           cell.classList.add(getCellClassName([j, i], this.board));
           if (isMoving) cell.classList.add("moving");
         });
+      });
+
+      this.renderShips();
+    },
+
+    renderShips: function () {
+      const shipsContainer = this.component.querySelector(".board-ships");
+
+      Array.from(shipsContainer.children).forEach((shipImage) => {
+        shipsContainer.removeChild(shipImage);
+      });
+
+      const windowWidth = document.documentElement.clientWidth;
+      const windowHeight = document.documentElement.clientHeight;
+
+      const isVerticalScreen = windowHeight > windowHeight;
+
+      const cellSize =
+        (4 / 100) * (isVerticalScreen ? windowWidth : windowHeight);
+      const gridGap = cellSize / 10;
+
+      this.board.ships.forEach((ship, i) => {
+        if (
+          !this.component.classList.contains("editing") &&
+          !this.component.classList.contains("only-human") &&
+          !ship.isSunk()
+        ) {
+          return;
+        }
+        const x = ship.coordinates[0];
+        const y = ship.coordinates[1];
+
+        const shipImage = new Image();
+        switch (ship.type) {
+          case ShipType.CARRIER:
+            shipImage.src = carrierSvg;
+            break;
+          case ShipType.BATTLESHIP:
+            shipImage.src = battleshipSvg;
+            break;
+          case ShipType.DESTROYER:
+            shipImage.src = destroyerSvg;
+            break;
+          case ShipType.SUBMARINE:
+            shipImage.src = submarineSvg;
+            break;
+          case ShipType.PATROL:
+            shipImage.src = patrolSvg;
+            break;
+        }
+        shipImage.alt = ship.type;
+        shipImage.title = ship.type;
+
+        if (ship.orientation === ShipOrientation.VERTICAL) {
+          shipImage.style.transformOrigin = "top left";
+          shipImage.style.transform = `rotate(90deg) translateY(-${cellSize}px)`;
+        }
+
+        shipImage.style.left = `${x * (cellSize + gridGap)}px`;
+        shipImage.style.top = `${y * (cellSize + gridGap)}px`;
+
+        let lastMousePosition = [];
+
+        shipImage.addEventListener("mousedown", (event) => {
+          if (!this.component.classList.contains("editing")) return;
+
+          event.preventDefault();
+          this.toggleShipMotion(ship.coordinates);
+          lastMousePosition = [event.clientX, event.clientY];
+        });
+
+        shipImage.addEventListener("mousemove", (event) => {
+          if (!this.component.classList.contains("editing")) return;
+
+          if (lastMousePosition[0] === undefined) return;
+          const parentBounds =
+            event.target.parentElement.getBoundingClientRect();
+          const shipBounds = event.target.getBoundingClientRect();
+          // console.log(event.clientX - parentBounds.x - shipBounds.width / 2);
+
+          if (ship.orientation === ShipOrientation.HORIZONTAL) {
+            shipImage.style.left = `${event.clientX - parentBounds.x - (shipBounds.width * ship.length) / 5 / 2}px`;
+            shipImage.style.top = `${event.clientY - parentBounds.y - shipBounds.height / 2}px`;
+          } else {
+            shipImage.style.left = `${event.clientX - parentBounds.x - (shipBounds.width * ship.length) / 10}px`;
+            shipImage.style.top = `${event.clientY - parentBounds.y - (shipBounds.height * ship.length) / 10}px`;
+          }
+        });
+
+        shipImage.addEventListener("mouseup", (event) => {
+          if (!this.component.classList.contains("editing")) return;
+          event.preventDefault();
+          this.toggleShipMotion(ship.coordinates);
+
+          try {
+            this.board.moveShip(i, [
+              Math.floor(event.target.offsetLeft / (cellSize + gridGap)),
+              Math.floor(event.target.offsetTop / (cellSize + gridGap)),
+            ]);
+          } catch (e) {
+            console.log("Error: ", e);
+            // this.toggleShipMotion(ship.coordinates);
+          }
+
+          this.render();
+        });
+
+        shipImage.addEventListener("contextmenu", (event) => {
+          if (!this.component.classList.contains("editing")) return;
+
+          event.preventDefault();
+
+          if (this.board.rotateShip(i)) {
+            this.render();
+          }
+        });
+
+        shipsContainer.appendChild(shipImage);
       });
     },
 
@@ -407,6 +538,7 @@ export function createBoardComponent(board, player, attackable, mutable, game) {
 
       DOMBoard.editing = true;
       DOMBoard.component.classList.add("editing");
+      DOMBoard.render();
     });
 
     boardHeader
