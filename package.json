@@ -1,8 +1,8 @@
 {
-  "name": "battleship",
+  "name": "blitzbay",
   "version": "1.0.0",
   "type": "module",
-  "description": "A web-based clone of the classic strategy game",
+  "description": "A web-based clone of the classic strategy game blitzbay",
   "private": "true",
   "scripts": {
     "test": "jest",
@@ -13,14 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shamblonaut/battleship.git"
+    "url": "git+https://github.com/shamblonaut/blitzbay.git"
   },
   "author": "Shamblonaut",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/shamblonaut/battleship/issues"
+    "url": "https://github.com/shamblonaut/blitzbay/issues"
   },
-  "homepage": "https://github.com/shamblonaut/battleship#readme",
+  "homepage": "https://github.com/shamblonaut/blitzbay#readme",
   "devDependencies": {
     "@babel/core": "^7.24.4",
     "@babel/preset-env": "^7.24.4",

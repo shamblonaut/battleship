@@ -10,7 +10,7 @@ const root = document.getElementById("root");
 root.innerHTML = `
   <header>
     <button class="back-button"></button>
-    <img class="logo" alt="Logo" /><h1>BATTLESHIP</h1>
+    <img class="logo" alt="Logo" /><h1>BLITZBAY</h1>
   </header>
 `;
 
