@@ -249,9 +249,7 @@ export function createGameBoard(size) {
         }
       }
 
-      throw new Error(
-        `No ship found at given index: [${coordinates[0]}, ${coordinates[1]}]`,
-      );
+      return -1;
     },
 
     receiveAttack: function (coordinates) {

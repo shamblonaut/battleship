@@ -148,9 +148,7 @@ describe("GameBoard", () => {
     expect(newBoard.getShipIndex([5, 4])).toBe(1);
     expect(newBoard.getShipIndex([7, 4])).toBe(1);
 
-    expect(() => newBoard.getShipIndex([5, 5])).toThrow(
-      "No ship found at given index: [5, 5]",
-    );
+    expect(newBoard.getShipIndex([5, 5])).toBe(-1);
   });
 
   it("allows ships to be moved from their original position", () => {
