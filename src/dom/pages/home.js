@@ -51,11 +51,13 @@ export function createHomePage() {
         createPlayer("Player", PlayerType.HUMAN, 10),
         createPlayer("Computer", PlayerType.COMPUTER, 10),
       );
+      document.querySelector("#root").classList.add("vs-computer");
     } else {
       game = setupGame(
         createPlayer("Player 1", PlayerType.HUMAN, 10),
         createPlayer("Player 2", PlayerType.HUMAN, 10),
       );
+      document.querySelector("#root").classList.add("vs-friend");
     }
 
     homePage.parentNode.appendChild(createGamePage(game));

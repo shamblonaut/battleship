@@ -34,14 +34,6 @@ export function setupGame(playerOne, playerTwo, mode) {
       document.querySelector(".attack-info").classList.remove("hidden");
       document.querySelector("#root").classList.add("in-progress");
 
-      document.querySelector("#root").classList.remove("vs-computer");
-      document.querySelector("#root").classList.remove("vs-friend");
-      document
-        .querySelector("#root")
-        .classList.add(
-          mode === GameMode.COMPUTER ? "vs-computer" : "vs-friend",
-        );
-
       document.querySelectorAll(".board-controls").forEach((boardControls) => {
         boardControls.classList.add("hidden");
       });
@@ -121,7 +113,12 @@ export function setupGame(playerOne, playerTwo, mode) {
         this.boards[this.currentPlayerIndex].component.classList.remove(
           "active",
         );
+        this.boards[this.currentPlayerIndex].component.classList.add(
+          "attacking",
+        );
+
         this.boards[nextPlayerIndex].component.classList.add("active");
+        this.boards[nextPlayerIndex].component.classList.remove("attacking");
 
         this.boards[this.currentPlayerIndex].active = false;
         this.boards[nextPlayerIndex].active = true;
@@ -137,6 +134,7 @@ export function setupGame(playerOne, playerTwo, mode) {
             this.boards[nextPlayerIndex].component.appendChild(
               createPassingScreen(this.players, this.currentPlayerIndex),
             );
+            this.boards[nextPlayerIndex].render();
           }
 
           document.querySelector("#root").classList.add("attack-allowed");

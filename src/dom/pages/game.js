@@ -38,5 +38,8 @@ export function createGamePage(game) {
     game.reset();
   });
 
+  game.boards[0].render();
+  game.boards[1].render();
+
   return gamePage;
 }

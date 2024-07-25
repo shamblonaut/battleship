@@ -52,17 +52,21 @@ export function setupGameBoards(game, playerOne, playerTwo) {
   );
 
   [boardOne, boardTwo].forEach((DOMBoard, boardIndex) => {
+    let movingShipIndex = null;
+    let relativeDraggingCell = null;
+
     Array.from(DOMBoard.component.children[1].children).forEach((row, i) => {
       Array.from(row.children).forEach((cell, j) => {
         cell.addEventListener("click", () => {
+          // if (
+          //   DOMBoard.editing &&
+          //   DOMBoard.isMutable() &&
+          //   cell.classList.contains("ship") &&
+          //   !game.isInProgress
+          // ) {
+          //   DOMBoard.toggleShipMotion([j, i]);
+          // }
           if (
-            DOMBoard.editing &&
-            DOMBoard.isMutable() &&
-            cell.classList.contains("ship") &&
-            !game.isInProgress
-          ) {
-            // DOMBoard.toggleShipMotion([j, i]);
-          } else if (
             DOMBoard.isAttackable() &&
             DOMBoard.active &&
             game.isInProgress &&
@@ -91,22 +95,119 @@ export function setupGameBoards(game, playerOne, playerTwo) {
             return;
           }
 
-          // const shipIndex = DOMBoard.board.getShipIndex([j, i]);
-          // const ship = DOMBoard.board.ships[shipIndex];
-          //
-          // if (!cell.classList.contains("moving")) {
-          //   DOMBoard.toggleShipMotion(ship.coordinates);
-          // }
-          //
-          // if (DOMBoard.board.rotateShip(shipIndex)) {
-          //   DOMBoard.clear();
-          //   DOMBoard.toggleShipMotion(ship.coordinates);
-          //   DOMBoard.render();
-          // }
-          //
-          // event.preventDefault();
+          const shipIndex = DOMBoard.board.getShipIndex([j, i]);
+          const ship = DOMBoard.board.ships[shipIndex];
+
+          if (!cell.classList.contains("moving")) {
+            DOMBoard.toggleShipMotion(ship.coordinates);
+          }
+
+          if (DOMBoard.board.rotateShip(shipIndex)) {
+            DOMBoard.clear();
+            DOMBoard.toggleShipMotion(ship.coordinates);
+            DOMBoard.render();
+          }
+
+          event.preventDefault();
+        });
+
+        cell.addEventListener("mousedown", (event) => {
+          if (!DOMBoard.editing) return;
+          if (event.button === 2) return;
+
+          const shipIndex = DOMBoard.board.getShipIndex([j, i]);
+          if (shipIndex === undefined) return;
+          else {
+            movingShipIndex = shipIndex;
+
+            const shipCoordinates =
+              DOMBoard.board.ships[movingShipIndex].coordinates;
+            relativeDraggingCell = [
+              j - shipCoordinates[0],
+              i - shipCoordinates[1],
+            ];
+          }
+
+          DOMBoard.toggleShipMotion([j, i]);
         });
       });
+    });
+
+    DOMBoard.component.addEventListener("mouseover", (event) => {
+      if (!DOMBoard.editing) return;
+      if (movingShipIndex === null) return;
+      if (!event.target.classList.contains("cell")) return;
+
+      DOMBoard.clear();
+
+      const cellIndex = getCellIndex(event.target);
+      const newCoordinates = [
+        cellIndex[0] - relativeDraggingCell[0],
+        cellIndex[1] - relativeDraggingCell[1],
+      ];
+      if (
+        newCoordinates[0] < 0 ||
+        newCoordinates[1] < 0 ||
+        newCoordinates[0] >= DOMBoard.board.size ||
+        newCoordinates[1] >= DOMBoard.board.size
+      ) {
+        return;
+      }
+
+      DOMBoard.toggleShipMotion(
+        newCoordinates,
+        DOMBoard.board.ships[movingShipIndex],
+      );
+
+      const shipImage = DOMBoard.component.querySelector(
+        `.ship-${movingShipIndex}`,
+      );
+      if (shipImage) {
+        const newCell =
+          DOMBoard.component.children[1].children[newCoordinates[1]].children[
+            newCoordinates[0]
+          ];
+        shipImage.style.left = `${newCell.offsetLeft}px`;
+        shipImage.style.top = `${newCell.offsetTop}px`;
+      }
+    });
+
+    document.addEventListener("mouseup", (event) => {
+      if (
+        movingShipIndex !== null &&
+        event.target.classList.contains("cell") &&
+        event.target.parentNode.parentNode.parentNode === DOMBoard.component
+      ) {
+        const cellIndex = getCellIndex(event.target);
+        const newCoordinates = [
+          cellIndex[0] - relativeDraggingCell[0],
+          cellIndex[1] - relativeDraggingCell[1],
+        ];
+        const movingShip = DOMBoard.board.ships[movingShipIndex];
+
+        if (
+          newCoordinates[0] >= 0 &&
+          newCoordinates[1] >= 0 &&
+          ((movingShip.orientation === ShipOrientation.HORIZONTAL &&
+            newCoordinates[0] < DOMBoard.board.size - movingShip.length + 1) ||
+            (movingShip.orientation === ShipOrientation.VERTICAL &&
+              newCoordinates[1] < DOMBoard.board.size - movingShip.length + 1))
+        ) {
+          DOMBoard.board.moveShip(movingShipIndex, newCoordinates);
+        }
+      } else if (movingShipIndex !== null) {
+        const movingCell = DOMBoard.component.querySelector(".moving");
+        if (movingCell) {
+          const newCoordinates = getCellIndex(movingCell);
+          DOMBoard.board.moveShip(movingShipIndex, newCoordinates);
+        }
+      }
+
+      movingShipIndex = null;
+      relativeDraggingCell = null;
+
+      DOMBoard.clear();
+      DOMBoard.render();
     });
   });
 
@@ -237,18 +338,24 @@ export function createBoardComponent(board, player, attackable, mutable, game) {
 
       const isVerticalScreen = windowHeight > windowHeight;
 
-      const cellSize =
-        (4 / 100) * (isVerticalScreen ? windowWidth : windowHeight);
+      let cellSize = this.component.querySelector(".cell").clientWidth;
+      if (!cellSize) {
+        cellSize = (4 / 100) * (isVerticalScreen ? windowWidth : windowHeight);
+      }
+
       const gridGap = cellSize / 10;
+      console.log(cellSize);
 
       this.board.ships.forEach((ship, i) => {
         if (
           !this.component.classList.contains("editing") &&
           !this.component.classList.contains("only-human") &&
+          !this.component.classList.contains("attacking") &&
           !ship.isSunk()
         ) {
           return;
         }
+
         const x = ship.coordinates[0];
         const y = ship.coordinates[1];
 
@@ -272,6 +379,12 @@ export function createBoardComponent(board, player, attackable, mutable, game) {
         }
         shipImage.alt = ship.type;
         shipImage.title = ship.type;
+        shipImage.className = `ship-img`;
+        shipImage.classList.add(`ship-${i}`);
+
+        if (ship.isSunk()) {
+          shipImage.classList.add(`ship-sunk`);
+        }
 
         if (ship.orientation === ShipOrientation.VERTICAL) {
           shipImage.style.transformOrigin = "top left";
@@ -280,62 +393,6 @@ export function createBoardComponent(board, player, attackable, mutable, game) {
 
         shipImage.style.left = `${x * (cellSize + gridGap)}px`;
         shipImage.style.top = `${y * (cellSize + gridGap)}px`;
-
-        let lastMousePosition = [];
-
-        shipImage.addEventListener("mousedown", (event) => {
-          if (!this.component.classList.contains("editing")) return;
-
-          event.preventDefault();
-          this.toggleShipMotion(ship.coordinates);
-          lastMousePosition = [event.clientX, event.clientY];
-        });
-
-        shipImage.addEventListener("mousemove", (event) => {
-          if (!this.component.classList.contains("editing")) return;
-
-          if (lastMousePosition[0] === undefined) return;
-          const parentBounds =
-            event.target.parentElement.getBoundingClientRect();
-          const shipBounds = event.target.getBoundingClientRect();
-          // console.log(event.clientX - parentBounds.x - shipBounds.width / 2);
-
-          if (ship.orientation === ShipOrientation.HORIZONTAL) {
-            shipImage.style.left = `${event.clientX - parentBounds.x - (shipBounds.width * ship.length) / 5 / 2}px`;
-            shipImage.style.top = `${event.clientY - parentBounds.y - shipBounds.height / 2}px`;
-          } else {
-            shipImage.style.left = `${event.clientX - parentBounds.x - (shipBounds.width * ship.length) / 10}px`;
-            shipImage.style.top = `${event.clientY - parentBounds.y - (shipBounds.height * ship.length) / 10}px`;
-          }
-        });
-
-        shipImage.addEventListener("mouseup", (event) => {
-          if (!this.component.classList.contains("editing")) return;
-          event.preventDefault();
-          this.toggleShipMotion(ship.coordinates);
-
-          try {
-            this.board.moveShip(i, [
-              Math.floor(event.target.offsetLeft / (cellSize + gridGap)),
-              Math.floor(event.target.offsetTop / (cellSize + gridGap)),
-            ]);
-          } catch (e) {
-            console.log("Error: ", e);
-            // this.toggleShipMotion(ship.coordinates);
-          }
-
-          this.render();
-        });
-
-        shipImage.addEventListener("contextmenu", (event) => {
-          if (!this.component.classList.contains("editing")) return;
-
-          event.preventDefault();
-
-          if (this.board.rotateShip(i)) {
-            this.render();
-          }
-        });
 
         shipsContainer.appendChild(shipImage);
       });
@@ -375,37 +432,58 @@ export function createBoardComponent(board, player, attackable, mutable, game) {
       this.render();
     },
 
-    toggleShipMotion: function (coordinates) {
-      const cell =
-        this.component.children[1].children[coordinates[1]].children[
-          coordinates[0]
-        ];
+    toggleShipMotion: function (coordinates, movingShip = null) {
+      if (
+        coordinates[0] < 0 ||
+        coordinates[1] < 0 ||
+        coordinates[0] >= this.board.size ||
+        coordinates[1] >= this.board.size
+      ) {
+        return;
+      }
 
-      if (!cell.classList.contains("ship")) return;
+      if (
+        movingShip &&
+        ((movingShip.orientation === ShipOrientation.HORIZONTAL &&
+          coordinates[0] >= this.board.size - movingShip.length + 1) ||
+          (movingShip.orientation === ShipOrientation.VERTICAL &&
+            coordinates[1] >= this.board.size - movingShip.length + 1))
+      ) {
+        return;
+      }
 
-      const shipIndex = this.board.getShipIndex(coordinates);
-      let ship = this.board.ships[shipIndex];
+      if (!movingShip) {
+        const cell =
+          this.component.children[1].children[coordinates[1]].children[
+            coordinates[0]
+          ];
+        if (!cell.classList.contains("ship")) return;
+      }
 
-      switch (ship.orientation) {
+      let ship, length, orientation;
+
+      if (movingShip) {
+        length = movingShip.length;
+        orientation = movingShip.orientation;
+      } else {
+        ship = this.board.ships[this.board.getShipIndex(coordinates)];
+        coordinates = ship.coordinates;
+        length = ship.length;
+        orientation = ship.orientation;
+      }
+
+      switch (orientation) {
         case ShipOrientation.HORIZONTAL:
-          for (
-            let i = ship.coordinates[0];
-            i <= ship.coordinates[0] + ship.length - 1;
-            i++
-          ) {
-            this.component.children[1].children[ship.coordinates[1]].children[
+          for (let i = coordinates[0]; i <= coordinates[0] + length - 1; i++) {
+            this.component.children[1].children[coordinates[1]].children[
               i
             ].classList.toggle("moving");
           }
           break;
         case ShipOrientation.VERTICAL:
-          for (
-            let i = ship.coordinates[1];
-            i <= ship.coordinates[1] + ship.length - 1;
-            i++
-          ) {
+          for (let i = coordinates[1]; i <= coordinates[1] + length - 1; i++) {
             this.component.children[1].children[i].children[
-              ship.coordinates[0]
+              coordinates[0]
             ].classList.toggle("moving");
           }
           break;
