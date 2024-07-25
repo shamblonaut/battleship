@@ -446,7 +446,7 @@ td:last-child {
   .board-ships
   .ship-img:not(.ship-sunk),
 .in-progress.passing .attacking .board-ships .ship-img:not(.ship-sunk),
-.active .ship-img:not(.ship-sunk),
+.active:not(.only-human) .ship-img:not(.ship-sunk),
 .computer .ship-img:not(.ship-sunk) {
   display: none;
 }
@@ -611,5 +611,9 @@ td:last-child {
   .cell.hit::after,
   .cell.sunk::after {
     font-size: 0.75rem;
+  }
+
+  .game-over-screen {
+    font-size: 6vw;
   }
 }

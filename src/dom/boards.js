@@ -185,42 +185,7 @@ export function setupGameBoards(game, playerOne, playerTwo) {
       }
     }
 
-    function handleShipPlace(event) {
-      // let target;
-      // console.log(event);
-      // if (event.touches && event.touches.length > 0) {
-      //   target = document.elementFromPoint(
-      //     event.touches[0].clientX,
-      //     event.touches[0].clientY,
-      //   );
-      //   event.preventDefault();
-      // } else {
-      //   target = event.target;
-      // }
-
-      // if (
-      //   movingShipIndex !== null &&
-      //   target.classList.contains("cell") &&
-      //   target.parentNode.parentNode.parentNode === DOMBoard.component
-      // ) {
-      //   const cellIndex = getCellIndex(target);
-      //   const newCoordinates = [
-      //     cellIndex[0] - relativeDraggingCell[0],
-      //     cellIndex[1] - relativeDraggingCell[1],
-      //   ];
-      //   const movingShip = DOMBoard.board.ships[movingShipIndex];
-      //
-      //   if (
-      //     newCoordinates[0] >= 0 &&
-      //     newCoordinates[1] >= 0 &&
-      //     ((movingShip.orientation === ShipOrientation.HORIZONTAL &&
-      //       newCoordinates[0] < DOMBoard.board.size - movingShip.length + 1) ||
-      //       (movingShip.orientation === ShipOrientation.VERTICAL &&
-      //         newCoordinates[1] < DOMBoard.board.size - movingShip.length + 1))
-      //   ) {
-      //     DOMBoard.board.moveShip(movingShipIndex, newCoordinates);
-      //   }
-      // } else
+    function handleShipPlace() {
       if (movingShipIndex !== null) {
         const movingCell = DOMBoard.component.querySelector(".moving");
         if (movingCell) {
@@ -250,7 +215,7 @@ export function setupGameBoards(game, playerOne, playerTwo) {
   return [boardOne, boardTwo];
 }
 
-export function createBoardComponent(board, player, attackable, mutable, game) {
+export function createBoardComponent(board, player, attackable, mutable) {
   const boardComponent = document.createElement("div");
   boardComponent.classList.add("board");
 
@@ -594,29 +559,6 @@ export function createBoardComponent(board, player, attackable, mutable, game) {
 
       return result;
     },
-
-    computerAttack: async function (attackerIndex) {
-      let x, y;
-
-      let valid = false;
-      while (!valid) {
-        x = Math.floor(Math.random() * board.size);
-        y = Math.floor(Math.random() * board.size);
-
-        const cell = this.component.children[1].children[y].children[x];
-        if (
-          cell.classList.contains("empty") ||
-          cell.classList.contains("ship")
-        ) {
-          break;
-        }
-      }
-
-      await new Promise((r) => setTimeout(r, 500));
-
-      const attack = this.receiveAttack([x, y]);
-      game.updateAttackInfo(attack.result, attack.ship, attackerIndex);
-    },
   };
 
   function saveEdits() {
@@ -674,7 +616,7 @@ export function createBoardComponent(board, player, attackable, mutable, game) {
   return DOMBoard;
 }
 
-function getCellIndex(cell) {
+export function getCellIndex(cell) {
   return [
     Array.prototype.indexOf.call(cell.parentNode.children, cell),
     Array.prototype.indexOf.call(

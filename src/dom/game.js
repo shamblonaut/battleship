@@ -1,13 +1,46 @@
 import { CellState } from "../core/gameBoard.js";
 import { PlayerType } from "../core/player.js";
-import { setupGameBoards } from "./boards.js";
+import { getCellIndex, setupGameBoards } from "./boards.js";
 
 export const GameMode = Object.freeze({
   COMPUTER: "computer",
   FRIEND: "friend",
 });
 
+const computerAttackMode = Object.freeze({
+  RANDOM: 0,
+  ADJACENT: 1,
+  DIRECTED: 2,
+});
+
+const adjacentCoordinates = [
+  [0, -1],
+  [-1, 0],
+  [0, 1],
+  [1, 0],
+];
+
 export function setupGame(playerOne, playerTwo, mode) {
+  let hitInfo = {
+    attackMode: computerAttackMode.RANDOM,
+    firstHit: null,
+    lastHit: null,
+    direction: null,
+    adjacentTries: 0,
+
+    reset: function () {
+      this.attackMode = computerAttackMode.RANDOM;
+      this.firstHit = null;
+      this.latestHit = null;
+      this.direction = null;
+      this.adjacentTries = 0;
+    },
+
+    incrementAdjacentTries: function () {
+      this.adjacentTries++;
+    },
+  };
+
   const game = {
     mode,
 
@@ -124,9 +157,7 @@ export function setupGame(playerOne, playerTwo, mode) {
         this.boards[nextPlayerIndex].active = true;
 
         if (currentPlayer.type === PlayerType.COMPUTER && !this.isGameOver) {
-          await this.boards[nextPlayerIndex].computerAttack(
-            this.currentPlayerIndex,
-          );
+          await this.computerAttack(this.currentPlayerIndex, nextPlayerIndex);
         } else {
           this.isPlayerWaiting = true;
 
@@ -146,6 +177,146 @@ export function setupGame(playerOne, playerTwo, mode) {
 
         this.currentPlayerIndex = nextPlayerIndex;
       }
+    },
+
+    computerAttack: async function (attacker, receiver) {
+      const DOMBoard = this.boards[receiver];
+
+      let x, y;
+
+      let valid = false;
+      let iterations = 0;
+      while (!valid) {
+        if (hitInfo.attackMode === computerAttackMode.RANDOM) {
+          hitInfo.reset();
+
+          const hitSquares = DOMBoard.component.querySelectorAll(".cell.hit");
+          if (hitSquares.length > 0) {
+            const lastHitSquare = hitSquares[hitSquares.length - 1];
+            hitInfo.firstHit = getCellIndex(lastHitSquare);
+            hitInfo.attackMode = computerAttackMode.ADJACENT;
+            iterations++;
+            continue;
+          }
+
+          x = Math.floor(Math.random() * DOMBoard.board.size);
+          y = Math.floor(Math.random() * DOMBoard.board.size);
+        } else if (hitInfo.attackMode === computerAttackMode.ADJACENT) {
+          if (hitInfo.adjacentTries >= 4) {
+            hitInfo.reset();
+            iterations++;
+            continue;
+          }
+
+          x =
+            hitInfo.firstHit[0] + adjacentCoordinates[hitInfo.adjacentTries][0];
+          y =
+            hitInfo.firstHit[1] + adjacentCoordinates[hitInfo.adjacentTries][1];
+        } else if (hitInfo.attackMode === computerAttackMode.DIRECTED) {
+          x = hitInfo.lastHit[0] + hitInfo.direction[0];
+          y = hitInfo.lastHit[1] + hitInfo.direction[1];
+        }
+
+        if (
+          x < 0 ||
+          y < 0 ||
+          x >= DOMBoard.board.size ||
+          y >= DOMBoard.board.size
+        ) {
+          if (hitInfo.attackMode === computerAttackMode.ADJACENT) {
+            hitInfo.incrementAdjacentTries();
+          } else if (hitInfo.attackMode === computerAttackMode.DIRECTED) {
+            hitInfo.lastHit = null;
+            hitInfo.direction = null;
+            hitInfo.adjacentTries = 0;
+            hitInfo.attackMode = computerAttackMode.ADJACENT;
+          }
+          iterations++;
+          continue;
+        }
+
+        const cell = DOMBoard.component.children[1].children[y].children[x];
+        if (
+          cell.classList.contains("miss") ||
+          cell.classList.contains("sunk")
+        ) {
+          switch (hitInfo.attackMode) {
+            case computerAttackMode.ADJACENT:
+              hitInfo.incrementAdjacentTries();
+              break;
+            case computerAttackMode.DIRECTED:
+              hitInfo.lastHit = null;
+              hitInfo.direction = null;
+              hitInfo.adjacentTries = 0;
+              hitInfo.attackMode = computerAttackMode.ADJACENT;
+              break;
+          }
+        } else if (cell.classList.contains("hit")) {
+          switch (hitInfo.attackMode) {
+            case computerAttackMode.RANDOM:
+              hitInfo.reset();
+              hitInfo.firstHit = [x, y];
+              hitInfo.attackMode = computerAttackMode.ADJACENT;
+              break;
+            case computerAttackMode.ADJACENT:
+              hitInfo.incrementAdjacentTries();
+              break;
+          }
+        } else {
+          break;
+        }
+
+        iterations++;
+        if (iterations > 250) {
+          throw new Error(
+            `Infinite loop while trying to calculate attack coordinate.\nAttack Mode: ${hitInfo.attackMode}\nLast tried coordinates: [${x}, ${y}]`,
+          );
+        }
+      }
+
+      await new Promise((r) => setTimeout(r, 800));
+
+      const attack = DOMBoard.receiveAttack([x, y]);
+
+      console.log(hitInfo.attackMode, attack.result);
+      switch (attack.result) {
+        case CellState.MISS:
+          switch (hitInfo.attackMode) {
+            case computerAttackMode.ADJACENT:
+              hitInfo.incrementAdjacentTries();
+              break;
+            case computerAttackMode.DIRECTED:
+              hitInfo.lastHit = null;
+              hitInfo.direction = null;
+              hitInfo.adjacentTries = 0;
+              hitInfo.attackMode = computerAttackMode.ADJACENT;
+              break;
+          }
+          break;
+        case CellState.HIT:
+          switch (hitInfo.attackMode) {
+            case computerAttackMode.RANDOM:
+              hitInfo.firstHit = [x, y];
+              hitInfo.attackMode = computerAttackMode.ADJACENT;
+              break;
+            case computerAttackMode.ADJACENT:
+              hitInfo.lastHit = [x, y];
+              hitInfo.direction = [
+                x - hitInfo.firstHit[0],
+                y - hitInfo.firstHit[1],
+              ];
+              hitInfo.attackMode = computerAttackMode.DIRECTED;
+              break;
+            case computerAttackMode.DIRECTED:
+              hitInfo.lastHit = [x, y];
+          }
+          break;
+        case CellState.SUNK:
+          hitInfo.reset();
+          break;
+      }
+
+      this.updateAttackInfo(attack.result, attack.ship, attacker);
     },
 
     updateAttackInfo: function (attackType, ship, attackerIndex) {
